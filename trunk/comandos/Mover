@@ -1,0 +1,164 @@
+#!/bin/bash
+# mover input output logOpcional
+
+#input path del archivo que se desea mover. Ejemplo: $grupo/arribos/factura1
+
+#output path hacia donde se mueve. Ejemplo: $grupo/recibidos/factura1
+
+###############################################################################
+#		Codigo de salidas
+#		=================
+#	0....Se realizo la operacion
+#	1....Cantidad de parametros recibidos no es 2 o 3
+#	2....El archivo que se quiere mover no existe	 
+#	3....El destino y el origen son iguales
+#
+###############################################################################
+
+###############################################################################
+# Funcion validarCantParametros
+#
+# verifica que la canecho $PWDtidad de parametros recibidos por el comando sea 2 o 3
+#
+# en caso de que la cantidad de parametros no sea la esperada sale del comando 
+# 	devolviendo 1
+###############################################################################
+
+function validarCantParametros(){
+	if [ $1 -ne 2 ] 
+	then
+		if [ $1 -ne 3 ]
+		then
+			echo "Incorrecto empleo del comando mover."
+			echo "La cantidad de parametros esperados son dos o tres."
+			exit 1 
+		# else algo por si pasa otra cosa	
+		fi	
+	#else algo por si pasa otra cosa
+	fi 
+}
+
+###############################################################################
+# Funcion existeArchivo
+#
+# verifica si el archivo recibido por parametro existe
+#
+# si el archivo no existe devuelve 0, caso contrario 1.
+###############################################################################
+
+function existeArchivo(){
+	if [ -e $1 ] 
+	then 
+		# ya existe un archivo con ese nombre
+		return 1
+	else
+		# el fichero no existe
+		return 0
+	fi
+}
+
+###############################################################################
+# Funcion directDup
+#
+# verifica si existe una carpeta llamada dup en el directorio pasado por parametro
+#
+# Si no existe esa carpeta, se crea.
+###############################################################################
+
+function directDup(){
+	local direct="$1/dup"
+	if [ ! -d "$direct" ]
+	then
+		mkdir -p $direct		
+	fi
+}
+
+###############################################################################
+# Funcion escribirLog
+#
+# si el comando que invoca a este otro tiene un archivo log, se escribira en el 
+# 	mismo el resultado de la operacion 
+#
+# Parametros:
+#	1 nombre del archivo log o cadena vacia en caso de que el comando que
+#		llamo al mover no tiene log
+#	2 tipo de mensaje
+#	3 descripcion del mensaje
+###############################################################################
+
+
+function escribirLog(){
+	if [ ! -z $1 ]
+	then
+	local comando=`echo "$2" | sed 's/\(.*\).log/\1/'`
+	echo $option
+		Glog $comando $2 $3
+	fi
+}
+
+###############################################################################
+#									      #
+#				   MOVER				      #
+#									      #
+###############################################################################
+
+# primero: validamos que la cantidad de parametros recibidos
+validarCantParametros $#
+
+# creo una variable log para saber si tengo que escribir o no en un archivo log
+if [ $1 -eq 3 ]
+then
+	log="$3"
+else
+	log=""
+fi
+
+# segundo: verificamos que el archivo que queremos mover exista
+existeArchivo $1
+	# guardo el retorno de la funcion. Si es 0 quiere decir que no existe el archivo
+	# por lo tanto termina el comando con codigo 2
+	aux=`echo $?`
+	if [ $aux -eq 0 ]
+	then
+		echo "El archivo $1 que se quiere mover no existe"
+		escribirLog $log "E" "Mover fallido: el archivo $1 no se puede mover porque no existe"		
+		exit 2
+	fi
+
+# tercero: verificamos si el destino y el origen son distintos
+if [ $1 = $2 ]
+then
+	echo "El destino y el origen son iguales. No se movio el archivo $1"
+	escribirLog $log "W" "Mover: el archivo $1 no se movio. El directorio destino y origen son iguales."		
+	exit 3
+fi
+
+# cuarto: verificamos que no exista un archivo con el mismo nombre en el directorio que 
+#	se va a mover
+existeArchivo $2
+
+	# guardo el retorno de la funcion. Si es 0 quiere decir que no existe el archivo
+	aux=`echo $?`
+	if [ $aux -eq 0 ]
+	then
+		# si no existe, simplemente muevo el archivo
+		mv $1 $2
+		escribirLog $log "I" "Mover exitoso: el archivo $1 se movio a $2"		
+	else
+		# ya existe un archivo con ese nombre en ese directorio
+		# creo la carpeta de archivos duplicados si es que no existe		
+		archivo=`dirname "$2"`
+		directDup "$archivo"
+		# armo el nuevo nombre para el archivo a mover a la carpeta de 
+		# duplicados
+		archivo="$archivo/dup/"
+		#calculo la cantidad de archivos que tiene la carpeta dup
+		cantArch=`find $archivo -maxdepth 1 -type f | wc -l`
+		archivo="$archivo`basename $2`.$cantArch"
+		echo "Aca hay otra salida: $archivo"
+		mv $1 "$archivo"
+		escribirLog $log "W" "Mover exitoso: el archivo $1 no se pudo mover a $2 porque ya existe un archivo con ese nombre. El archivo se movio a $archivo"		
+	fi
+echo "finalizacion de mover"
+exit 0
+
