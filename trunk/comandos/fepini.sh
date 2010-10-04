@@ -11,6 +11,9 @@ fi
 export INI_FEPINI=1			# indica que fepini esta siendo ejecutado
 export grupo="$PWD/.."		# directorio del trabajo practico 
 export PATH="$PATH:$PWD"
+export RECIBIDOS="$grupo/recibidos"
+export ACEPTADOS="$grupo/aceptados"
+export RECHAZADOS="$grupo/rechazados"
 
 echo "La variable grupo es $grupo"
 echo "La variable PATH es $PATH"
