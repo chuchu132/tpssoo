@@ -9,33 +9,7 @@
 ##############################
 
 
-function salirfep(){
-	sleep 10
-	rm "$grupo/temp/$1.lck"
-	echo Salir con $2
-	exit $2
-}
-
-function estaCorriendo(){
-	if [ -z $INI_FEPINI ]
-	then
-		echo No se ha inicializado el ambiente. Debe ejecutarse el comando \". fepini.sh\" previamente. 
-		#Glog -se "No se ha inicializado el ambiente. Debe ejecutarse el comando \". fepini.sh\" previamente. "
-		exit 1
-	fi
-	nombre="$grupo/temp/$1.lck"
-	if [ -a "$nombre" ]
-	then
-		echo El comando $1 ya esta siendo ejecutado.
-		#Glog
-		exit 1
-	else
-		echo $1 > "$nombre"
-		echo Creado archivo lock $nombre #TODO borrar esta linea
-	fi
-}
-
-function esDuplicado(){
+esDuplicado(){
 	local aceptados=`ls "$ACEPTADOS"`
 	for file in $aceptados
 	do
@@ -48,23 +22,26 @@ function esDuplicado(){
 	done
 }
 
-function validarCabecera(){ 
+validarCabecera(){ 
     return 0
 }
 
-function validarItems(){
+validarItems(){
     return 0
 }
 
-function validacionFinal(){
+validacionFinal(){
     return 0    
 }
 
-function grabarRegistro(){
+grabarRegistro(){
+	#TODO setear el valor correcto a las vars de aca abajo
+	local registro="${CAE};A PAGAR;${VTO};${MONTO}"
+	echo $registro >> "$grupo/facturas/apagar.txt"
     return 0
 }
 
-function procesar(){
+procesar(){
     validarCabecera $1
     if [ -z $? ]
     then
@@ -90,7 +67,7 @@ function procesar(){
 
 }
 
-function procesar_archivos(){
+procesar_archivos(){
 
 	cant_arch=`ls -l "$RECIBIDOS" | wc -l`
 	cant_arch=`echo "$cant_arch - 1" | bc -l`
@@ -108,6 +85,8 @@ function procesar_archivos(){
 			#Glog -i "Factura Duplicada: $file"
 		else
 			procesar $file
+			Mover "${RECIBIDOS}/$file" "$ACEPTADOS"
+			#Glog "Factura Aceptada: $file"
 		fi
 	done
 }
@@ -115,13 +94,17 @@ function procesar_archivos(){
 ##########################
 # feprima
 ##########################
-estaCorriendo $0
-procesar_archivos
 
-salirfep $0 $?
+iniTests $0
+if [ $? -eq 0 ]
+then
+	procesar_archivos
+	sleep 10	## TODO esta para ver que se bloquee bien el proceso
+	desbloquear $0
+	rdo=$?
+fi
 
-
-
+exit $rdo
 
 #end feprima
 
