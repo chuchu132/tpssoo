@@ -88,11 +88,13 @@ function directDup(){
 
 
 function escribirLog(){
-	if [ ! -z $1 ]
+	if [ $1 != "." ]
 	then
-	local comando=`echo "$2" | sed 's/\(.*\).log/\1/'`
-	echo $option
+	local comando=`echo "$1" | sed 's/\(.*\).log/\1/'`
+	echo "Aca sale otra cosa $comando"
 		Glog $comando $2 $3
+	else
+	echo "Entrando al else de escribirLog()"
 	fi
 }
 
@@ -106,11 +108,10 @@ function escribirLog(){
 validarCantParametros $#
 
 # creo una variable log para saber si tengo que escribir o no en un archivo log
-if [ $1 -eq 3 ]
+log="."
+if [ $# -eq 3 ]
 then
 	log="$3"
-else
-	log=""
 fi
 
 # segundo: verificamos que el archivo que queremos mover exista
