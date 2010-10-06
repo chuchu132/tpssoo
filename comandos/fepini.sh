@@ -6,7 +6,7 @@
 
 #################################################
 #	guarda que el comando esta siendo ejecutado	#
-#	param: nombre del comando					#
+#	$1: nombre del comando						#
 #################################################
 bloquear(){
 	if [ $# -lt 1 ]
@@ -30,7 +30,7 @@ bloquear(){
 
 #############################
 #	 borrar archivo lock	#
-# 	 param: nombre comando	#
+# 	 $1: nombre comando		#
 #############################
 desbloquear(){
 	if [ $# -lt 1 ]
@@ -46,7 +46,7 @@ desbloquear(){
 
 #############################################
 #	indica si se puede ejecutar el comando	#
-#	param: nombre del comando				#
+#	$1: nombre del comando					#
 #############################################
 iniTests(){
 	if [ $# -lt 1 ]
@@ -87,6 +87,10 @@ export PATH="$PATH:$PWD"	#TODO no me esta tomando las rutas con espacios!
 export RECIBIDOS="$grupo/recibidos"
 export ACEPTADOS="$grupo/aceptados"
 export RECHAZADOS="$grupo/rechazados"
+export DIA_HOY=`date +%d`
+export MES_HOY=`date +%m`
+export ANIO_HOY=`date +%y`
+export FECHA_HOY="$ANIO_HOY-$MES_HOY-$DIA_HOY"
 
 echo "La variable grupo es $grupo"
 echo "La variable PATH es $PATH"
