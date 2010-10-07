@@ -1,7 +1,5 @@
 #!/bin/bash
 
-
-
 ##############################
 # return: 
 #	0	<->	OK	
@@ -146,7 +144,7 @@ validacionFinal(){
 
 #############################################
 #	$1: archivo de la factura				#
-# 	necesita seteadas la variable COND_PAGO	#
+# 	necesita seteada la variable COND_PAGO	#
 #############################################
 grabarRegistro(){
 	local cae=`basename "$1"`
@@ -223,15 +221,17 @@ procesarArchivos(){
 #########################
 # feprima				#
 #########################
-
-iniTests $0
-if [ $? -eq 0 ]
+if [ -z $INI_FEPINI ]
 then
-	sleep 10	## TODO esta para ver que se bloquee bien el proceso
-	procesarArchivos
-	desbloquear $0
-	rdo=$?
+	echo No se ha inicializado el ambiente. Debe ejecutarse el comando \". fepini.sh\" previamente.
+	#Glog -se "No se ha inicializado el ambiente. Debe ejecutarse el comando \". fepini.sh\" previamente. "
+	exit 1
 fi
+
+bloquear "$0"
+procesarArchivos
+desbloquear "$0"
+rdo=$?
 
 exit $rdo
 

@@ -54,28 +54,6 @@ desbloquear(){
 	return $?
 }
 
-#############################################
-#	indica si se puede ejecutar el comando	#
-#	$1: nombre del comando					#
-#############################################
-iniTests(){
-	if [ $# -lt 1 ]
-	then
-		echo "*** iniTest recibe el nombre del comando ***"
-		return 1
-	fi
-	
-	if [ $INI_FEPINI -ne 1]
-	then
-		echo No se ha inicializado el ambiente. Debe ejecutarse el comando \". fepini.sh\" previamente.
-		#Glog -se "No se ha inicializado el ambiente. Debe ejecutarse el comando \". fepini.sh\" previamente. "
-		return 1
-	fi
-	
-	bloquear $1
-	return $?
-}
-
 
 ##########################
 #	fepini				 #
@@ -97,11 +75,6 @@ then
 	fi
 fi
 
-
-
-
-
-
 #	Variables de Ambiente	#
 
 export INI_FEPINI=2			# indica que fepini esta siendo ejecutado
@@ -117,7 +90,6 @@ export FECHA_HOY="$ANIO_HOY-$MES_HOY-$DIA_HOY"
 
 #	Funciones genericas para todos los comandos	#
 
-export -f iniTests
 export -f bloquear
 export -f desbloquear
 
