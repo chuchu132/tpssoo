@@ -1,13 +1,10 @@
 #!/bin/bash
 
-#especifica la ruta raiz donde se encontraran todos los archivos
-# en el codigo posta esto estara con la ruta correspondiente
-#GRUPO=``
-
-# nombre de los directorios
-#ARRIBOS=/home/leonardo/Escritorio/Demonio/arribos/
-#RECIBIDOS=/home/leonardo/Escritorio/Demonio/recibidos/
-#RECHAZADOS=/home/leonardo/Escritorio/Demonio/rechazados/
+# feponio.sh Demonio: Realiza el mismo proceso que se encuentra dentro del while
+# cada 30 segundos. De acuerdo a las especificaciones del trabajo; comprobando 
+# el nombre de los archivos arribados y pasandolos a la carpeta de recibidos o 
+# rechazados segun corresponda. 
+# Luego ejecuta el script feprima.sh, si no se esta procesando
 
 #ruta de arribos
 RUTAARRIBOS=$ARRIBOS
@@ -61,15 +58,12 @@ do
 	then
 		echo ""
 		echo "Existen archivos en $RUTARECIBIDOS."
-		# busco en los procesos que se estan corriendo actualmente
-		# al proceso feprima.sh
-		# x=`ps | grep '^.*feprima\.sh$'`
+		# busco en los procesos que se estan corriendo actualmente al proceso feprima.sh
 		x=`ps | grep 'feprima\.sh$'`
-		# si el grep retorna 1 quiere decir que no encontro ningun proceso con ese nombre
+		# si el grep retorna un valor distinto de 0 quiere decir que no encontro ningun proceso con ese nombre
 		if [ $? -ne 0 ]
 		then
 			echo "Se ejecuta feprima.sh"
-			# creo q de esta forma se llama al feprima.sh
 			feprima.sh
 		else
 			echo "No se puede lanzar feprima.sh porque está en ejecución."
