@@ -56,11 +56,70 @@ validarCabecera(){
 	#TODO validar formato y validaciones extra
 }
 
+##################################################################
+# Chequea, que la cuenta este bien, y q los montos sean positivos#
+#	$1: MontoIVAItem  $2: MontoItem  $3:TasaIVAItem          #
+##################################################################
+monto_es_valido(){
+    MontoTemp= `echo "$2 * $3 / 100" | bc -l`
+    if [ $MontoTemp -e $1 ]
+    then
+	 if [ `echo $1 | bc -l` < 0 ] -o  [ `echo $2 | bc -l` < 0 ] -o [ `echo $3 | bc -l` < 0 ]
+	 then
+	    return 0; #invalido
+	else
+	    return 1; #valido
+	fi
+    else
+	return 0; #invalido
+    fi
+}
+#############################
+#   $1: %iva                #
+#############################
+esta_gravado(){
+    if [ $1 -e "0.00" ]
+    then
+	return 1; #true
+    else
+	return 0; #false
+    fi
+} 
+
 
 #################################
 #	$1: archivo a validar		#
 #################################
 validarItems(){
+    local suma_monto_gravado
+    local suma_monto_no_gravado
+    local suma_monto_iva
+    
+    lineas=`sed 1d $1`
+    for linea in lineas
+    do
+    local DescItem = `echo $linea | cut -d ';' -f 1`
+    local MontoItem = `echo $linea | cut -d ';' -f 2`
+    local TasaIVAItem = `echo $linea | cut -d ';' -f 3`
+    local MontoIVAItem = `echo $linea | cut -d ';' -f 4`
+    if [ `monto_es_valido $MontoIVAItem $MontoItem $TasaIVAItem` -e 1]
+    then
+	if [ `esta_gravado $TasaIVAItem` -e 1 ]
+	then
+	    $suma_monto_gravado = `echo "$suma_monto_gravado + $MontoItem" | bc -l` 
+	else
+	    $suma_monto_no_gravado = `echo "$suma_monto_no_gravado + $MontoItem" | bc -l` 
+	fi
+	$suma_monto_iva = `echo "$suma_monto_iva + $MontoIVAItem" | bc -l` 
+    else
+      echo "Factura Errónea en registro de ítem: $1"
+      #Glog -se "Factura Errónea en registro de ítem: $1" 
+      return 1
+    fi
+    done
+    
+    #TODO comparar los valores de los acumuladores con los del encabezado
+    
     return 0
 }
 
@@ -145,6 +204,9 @@ procesarArchivos(){
 	#Glog
 }
 
+
+
+
 #########################
 # feprima				#
 #########################
@@ -161,4 +223,8 @@ fi
 exit $rdo
 
 #end feprima
+
+
+
+
 
