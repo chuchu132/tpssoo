@@ -32,7 +32,7 @@ validarCabecera(){
 	local resultado=`grep -q "^.*;${cuit_prov};.*;.*;.*;.*$" "$grupo/prin/maepro.txt"`
 	if [ $? -ne 0 ]
 	then
-		echo No existe el proveedor con CUIT $cuit_prov en el archivo maestro de proveedores
+		echo No existe el proveedor con CUIT $cuit_prov en el archivo maestro de proveedores 
 		return 1
 	fi
 	
@@ -111,16 +111,29 @@ validarItems(){
 	    $suma_monto_no_gravado = `echo "$suma_monto_no_gravado + $MontoItem" | bc -l` 
 	fi
 	$suma_monto_iva = `echo "$suma_monto_iva + $MontoIVAItem" | bc -l` 
-    else
-      echo "Factura Errónea en registro de ítem: $1"
-      #Glog -se "Factura Errónea en registro de ítem: $1" 
+    else 
       return 1
     fi
     done
     
-    #TODO comparar los valores de los acumuladores con los del encabezado
+    #	comparar los valores de los acumuladores con los del encabezado
+    if [ $suma_monto_no_gravado -eq `head -n 1 "$1" | cut -d ';' -f 7` ]
+    then
+    if [ $suma_monto_gravado -eq `head -n 1 "$1" | cut -d ';' -f 8` ]
+    then
+    if [ $suma_monto_iva -eq `head -n 1 "$1" | cut -d ';' -f 9` ]
+    then
+    	local total=`echo "$suma_monto_iva + $suma_monto_no_gravado + $suma_monto_gravado" | bc -l`
+    	if [ $total -eq `head -n 1 "$1" | cut -d ';' -f 10` ]
+    	then
+    		return 0 	# Los montos concuerdan con el encabezado
+    	fi
+    fi
+    fi
+    fi
     
-    return 0
+    echo Los montos no concuerdan con el encabezado 
+    return 1
 }
 
 

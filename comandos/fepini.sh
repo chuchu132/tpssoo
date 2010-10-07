@@ -4,6 +4,17 @@
 #	0	<->	OK
 #	1	<-> ERROR
 
+
+ambiente(){
+	echo "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
+	echo Ambiente:
+	echo "grupo = $grupo"
+	echo "PATH = $PATH"
+	echo "FECHA_HOY = $FECHA_HOY"	
+	echo "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
+
+}
+
 #################################################
 #	guarda que el comando esta siendo ejecutado	#
 #	$1: nombre del comando						#
@@ -22,8 +33,7 @@ bloquear(){
 		#Glog
 		return 1
 	else
-		echo $! > "$grupo/temp/.running_$comando.lck"
-		echo Creado archivo lock "$grupo/temp/.running_$comando.lck" #TODO borrar esta linea
+		echo $comando >> "$grupo/temp/.running_$comando.lck"
 		return 0
 	fi
 }
@@ -55,9 +65,9 @@ iniTests(){
 		return 1
 	fi
 	
-	if [ -z $INI_FEPINI ]
+	if [ $INI_FEPINI -ne 1]
 	then
-		echo No se ha inicializado el ambiente. Debe ejecutarse el comando \". fepini.sh\" previamente. 
+		echo No se ha inicializado el ambiente. Debe ejecutarse el comando \". fepini.sh\" previamente.
 		#Glog -se "No se ha inicializado el ambiente. Debe ejecutarse el comando \". fepini.sh\" previamente. "
 		return 1
 	fi
@@ -71,19 +81,32 @@ iniTests(){
 #	fepini				 #
 ##########################
 
-
+#	Verifico que el ambiente no haya sido inicializado	#
 if [ ! -z $INI_FEPINI ]
 then
-	echo El ambiente ya ha sido inicializado 
-	return 1
+	if [ $INI_FEPINI -eq 2 ]
+	then
+		echo Fepini ya esta siendo ejecutado
+		return 1
+	fi
+	if [ $INI_FEPINI -eq 1 ]
+	then
+		echo El ambiente ya ha sido inicializado 
+		ambiente
+		return 1
+	fi
 fi
+
+
+
+
 
 
 #	Variables de Ambiente	#
 
-export INI_FEPINI=1			# indica que fepini esta siendo ejecutado
+export INI_FEPINI=2			# indica que fepini esta siendo ejecutado
 export grupo="$PWD/.."		# directorio del trabajo practico 
-export PATH="$PATH:$PWD"	#TODO no me esta tomando las rutas con espacios!
+export PATH="$PATH:$PWD"	
 export RECIBIDOS="$grupo/recibidos"
 export ACEPTADOS="$grupo/aceptados"
 export RECHAZADOS="$grupo/rechazados"
@@ -92,16 +115,87 @@ export MES_HOY=`date +%m`
 export ANIO_HOY=`date +%y`
 export FECHA_HOY="$ANIO_HOY-$MES_HOY-$DIA_HOY"
 
-echo "La variable grupo es $grupo"
-echo "La variable PATH es $PATH"
-
 #	Funciones genericas para todos los comandos	#
 
 export -f iniTests
 export -f bloquear
 export -f desbloquear
 
+error=0
 
-return 0
+#	Validacion de la instalacion	#
+
+#	Verificar carpetas	#
+for carp in prin prin/old arribos recibidos rechazados aceptados facturas facturas/old facturas/listados comandos comandos/log temp
+do
+	if ! [ -d "$grupo/$carp" ]
+	then
+		mkdir "$grupo/$carp" > /dev/null
+	fi
+done
+
+
+#	Verificar archivos	#
+
+if [ ! -f "$grupo/prin/maepro.txt" ]
+then
+	echo No existe el archivo Maestro de Proveedores >> "$grupo/temp/instalacion.log"
+	error=1
+fi
+
+if [ ! -f "$grupo/prin/presu.txt" ]
+then
+	echo No existe el archivo de Presupuesto >> "$grupo/temp/instalacion.log"
+	error=1
+fi
+
+
+#	Verificar comandos	#
+
+for cmd in fepini.sh feponio.sh feprima.sh fepago feplist Glog Mover startfe stopfe
+do
+	if [ ! -e "$grupo/comandos/$cmd" ]
+	then
+		echo No esta instalado el comando $cmd >> "$grupo/temp/instalacion.log"
+		error=1
+	else
+		chmod 777 "$grupo/comandos/$cmd"
+	fi		
+done	
+
+
+# # # #
+echo "=========================================================="
+if [ $error -eq 0 ]
+then
+	#	Iniciar Feponio	#
+
+	local rdo=`ps | grep "feponio.sh$"`
+	if [ $? -eq 0 ]
+	then
+		#	lanzo el demonio
+		feponio.sh &
+		PID_FO=$!
+		#	en el archivo lock guardo el PID	
+		echo "PID=$PID_FO" >> "$grupo/temp/.running_feponio.sh.lck"
+	else
+		#	si ya esta corriendo obtengo su PID
+		PID_FO=`grep "PID=" "$grupo/temp/.running_feponio.sh.lck" | cut -d '=' -f 2`
+	fi
+
+	echo "Inicializacion de Ambiente Concluida"
+	ambiente
+	echo Demonio corriendo bajo el no.: $PID_FO
+	INI_FEPINI=1	#	indica que el ambiente esta inicializado
+	
+else
+	INI_FEPINI=0	#	indica que el ambiente no esta inicializado
+	echo "Inicializacion de Ambiente No fue exitosa. Errores:"
+	cat "$grupo/temp/instalacion.log"
+fi
+echo "=========================================================="
+
+rm -f "$grupo/temp/instalacion.log" > /dev/null
+#exit $error
 #end fepini
 
