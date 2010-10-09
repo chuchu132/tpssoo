@@ -31,6 +31,7 @@ validarCabecera(){
 	if [ $? -ne 0 ]
 	then
 		echo No existe el proveedor con CUIT $cuit_prov en el archivo maestro de proveedores 
+		glog.sh feprima WARN "No existe el proveedor con CUIT $cuit_prov en el archivo maestro de proveedores"
 		return 1
 	fi
 	
@@ -50,6 +51,7 @@ validarCabecera(){
 		fi
 	fi
 	echo "Factura Vencida: $1"
+	glog.sh feprima WARN "Factura Vencida: $1"
 	return 1
 	#TODO validar formato y validaciones extra
 }
@@ -176,15 +178,15 @@ procesar(){
 				grabarRegistro
 			else
 				echo "Factura Errónea, no coinciden los totales: $1"
-				#Glog -se "Factura Errónea no coinciden los totales: $1"
+				glog.sh feprima ERROR "Factura Errónea no coinciden los totales: $1"
 			fi
 		else
 			echo "Factura Errónea en registro de ítem: $1"
-			#Glog -se "Factura Errónea en registro de ítem: $1"
+			glog.sh feprima ERROR "Factura Errónea en registro de ítem: $1"
 		fi
     else
 	    echo "Factura Errónea en registro cabecera: $1"
-	    #Glog -se "Factura Errónea en registro cabecera: $1"
+	    glog.sh feprima ERROR "Factura Errónea en registro cabecera: $1"
     fi
 
 }
@@ -194,25 +196,27 @@ procesarArchivos(){
 	cant_arch=`ls -l "$RECIBIDOS" | wc -l`
 	cant_arch=`echo "$cant_arch - 1" | bc -l`
 	echo "Inicio de Feprima: $cant_arch"
-	# Glog -i "Inicio de Feprima: $cant_arch" 
+	glog.sh feprima INFO "=============================="
+	glog.sh feprima INFO "Inicio de Feprima: $cant_arch" 
 	
 	archivos=`ls "$RECIBIDOS"`
 	for file in $archivos
 	do
-		# Glog -i "Archivo a Procesar: $file"
+		glog.sh feprima INFO "Archivo a Procesar: $file"
 		repetido= `esDuplicado $file`
 		if [ $repetido -gt 0 ]
 		then
 			Mover "${RECIBIDOS}/$file" "$RECHAZADOS" 
-			#Glog -i "Factura Duplicada: $file"
+			glog.sh feprima WARN "Factura Duplicada: $file"
 		else
 			procesar $file
 			Mover "${RECIBIDOS}/$file" "$ACEPTADOS"
-			#Glog "Factura Aceptada: $file"
+			glog.sh feprima INFO "Factura Aceptada: $file"
 		fi
 	done
 	echo "Fin de Feprima"
-	#Glog
+	glog.sh feprima INFO "Fin de Feprima"
+	glog.sh feprima INFO "=============================="
 }
 
 
@@ -224,7 +228,7 @@ procesarArchivos(){
 if [ -z $INI_FEPINI ]
 then
 	echo No se ha inicializado el ambiente. Debe ejecutarse el comando \". fepini.sh\" previamente.
-	#Glog -se "No se ha inicializado el ambiente. Debe ejecutarse el comando \". fepini.sh\" previamente. "
+	./glog.sh feprima SERROR "No se ha inicializado el ambiente."
 	exit 1
 fi
 

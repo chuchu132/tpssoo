@@ -55,7 +55,7 @@ esac;
 #
 # Nota: Si la variable "GRUPO" no esta definida pone en el path el PWD
 
-logPath="${GRUPO:-$PWD}/comandos/log"
+logPath="${grupo:-$PWD}/comandos/log"
 
 # Verifico que exista el directorio
 if [ -d "${logPath}" ]
@@ -71,7 +71,7 @@ then
 else
 
 	# Verifico que pueda escribir en el directorio padre...
-	if [ ! -w "${GRUPO:-$PWD}" ]
+	if [ ! -w "${grupo:-$PWD}" ]
 	then
 		echo "No tiene permisos para crear el directorio \"${logPath}\"."
 		exit 20
