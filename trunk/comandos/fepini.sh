@@ -30,7 +30,7 @@ bloquear(){
 	if [ -a "$grupo/temp/.running_$comando.lck" ]
 	then
 		echo "El comando $comando ya esta siendo ejecutado."
-		#Glog
+		glog fepini WARN "El comando $comando ya esta siendo ejecutado."
 		return 1
 	else
 		echo $comando >> "$grupo/temp/.running_$comando.lck"
@@ -85,7 +85,7 @@ export ACEPTADOS="$grupo/aceptados"
 export RECHAZADOS="$grupo/rechazados"
 export DIA_HOY=`date +%d`
 export MES_HOY=`date +%m`
-export ANIO_HOY=`date +%y`
+export ANIO_HOY=`date +%Y`
 export FECHA_HOY="$ANIO_HOY-$MES_HOY-$DIA_HOY"
 
 #	Funciones genericas para todos los comandos	#
@@ -124,7 +124,7 @@ fi
 
 #	Verificar comandos	#
 
-for cmd in fepini.sh feponio.sh feprima.sh fepago feplist Glog Mover startfe stopfe
+for cmd in fepini.sh feponio.sh feprima.sh fepago feplist glog.sh Mover startfe stopfe
 do
 	if [ ! -e "$grupo/comandos/$cmd" ]
 	then
@@ -143,7 +143,7 @@ then
 	#	Iniciar Feponio	#
 
 	local rdo=`ps | grep "feponio.sh$"`
-	if [ $? -eq 0 ]
+	if [ $? -ne 0 ]
 	then
 		#	lanzo el demonio
 		feponio.sh &
@@ -157,13 +157,16 @@ then
 
 	echo "Inicializacion de Ambiente Concluida"
 	ambiente
-	echo Demonio corriendo bajo el no.: $PID_FO
+	echo "Demonio corriendo bajo el no.: $PID_FO"
+	glog.sh fepini INFO "Inicializacion de Ambiente Concluida"
+	glog.sh fepini INFO "Demonio corriendo bajo el no.: $PID_FO"
 	INI_FEPINI=1	#	indica que el ambiente esta inicializado
 	
 else
 	INI_FEPINI=0	#	indica que el ambiente no esta inicializado
 	echo "Inicializacion de Ambiente No fue exitosa. Errores:"
 	cat "$grupo/temp/instalacion.log"
+
 fi
 echo "=========================================================="
 

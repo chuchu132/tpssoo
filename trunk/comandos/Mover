@@ -143,7 +143,7 @@ existeArchivo $2
 	if [ $aux -eq 0 ]
 	then
 		# si no existe, simplemente muevo el archivo
-		mv $1 $2
+		mv "$1" "$2"
 		escribirLog $log "I" "Mover exitoso: el archivo $1 se movio a $2"		
 	else
 		# ya existe un archivo con ese nombre en ese directorio
@@ -157,7 +157,7 @@ existeArchivo $2
 		cantArch=`find $archivo -maxdepth 1 -type f | wc -l`
 		archivo="$archivo`basename $2`.$cantArch"
 		echo "Aca hay otra salida: $archivo"
-		mv $1 "$archivo"
+		mv "$1" "$archivo"
 		escribirLog $log "W" "Mover exitoso: el archivo $1 no se pudo mover a $2 porque ya existe un archivo con ese nombre. El archivo se movio a $archivo"		
 	fi
 echo "finalizacion de mover"
