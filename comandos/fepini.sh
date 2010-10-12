@@ -18,6 +18,7 @@ ambiente(){
 #################################################
 #	guarda que el comando esta siendo ejecutado	#
 #	$1: nombre del comando						#
+#	return 1 <-> el comando esta en ejecucion	#
 #################################################
 bloquear(){
 	if [ $# -lt 1 ]
