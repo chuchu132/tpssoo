@@ -233,9 +233,13 @@ then
 fi
 
 bloquear "$0"
-procesarArchivos
-desbloquear "$0"
 rdo=$?
+if [ $rdo -eq 0 ]
+then
+	procesarArchivos
+	desbloquear "$0"
+	rdo=$?
+fi
 
 exit $rdo
 
