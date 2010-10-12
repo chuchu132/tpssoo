@@ -3,7 +3,7 @@
 
 #input path del archivo que se desea mover. Ejemplo: $grupo/arribos/factura1
 
-#output path hacia donde se mueve. Ejemplo: $grupo/recibidos/factura1
+#output path hacia donde se mueve. Ejemplo: $grupo/recibidos
 
 ###############################################################################
 #		Codigo de salidas
@@ -86,15 +86,40 @@ function directDup(){
 #	3 descripcion del mensaje
 ###############################################################################
 
-
 function escribirLog(){
-	if [ $1 != "." ]
+	if [ $1 != "-" ]
 	then
 	local comando=`echo "$1" | sed 's/\(.*\).log/\1/'`
-	echo "Aca sale otra cosa $comando"
-		Glog $comando $2 $3
+	echo "Comando que le paso al glog $comando"
+	echo "Comando que le paso al glog $2"
+	echo "Comando que le paso al glog $3"
+		./glog.sh "$comando" "$2" "$3"
 	else
 	echo "Entrando al else de escribirLog()"
+	fi
+}
+
+###############################################################################
+# Funcion destinoOrigen
+#
+# si el comando que invoca a este otro tiene un archivo log, se escribira en el 
+# 	mismo el resultado de la operacion 
+#
+# Parametros:
+#	1 ruta del archivo que se quiere mover
+#	2 nombre que tomara el archivo a mover
+#	3 descripcion del mensaje
+###############################################################################
+
+function destinoOrigen(){
+	
+	local archivo=`dirname $1` #extraigo nombre del arch
+
+	if [ "$archivo" = "$2" ]
+	then
+		echo "El destino y el origen son iguales. No se movio el archivo $1"
+		escribirLog $3 "WARN" "Mover: el archivo $1 no se movio. El directorio destino y origen son iguales."		
+		exit 3
 	fi
 }
 
@@ -108,12 +133,12 @@ function escribirLog(){
 validarCantParametros $#
 
 # creo una variable log para saber si tengo que escribir o no en un archivo log
-log="."
+log="-"
 if [ $# -eq 3 ]
 then
 	log="$3"
 fi
-
+echo "Segundo paso:"
 # segundo: verificamos que el archivo que queremos mover exista
 existeArchivo $1
 	# guardo el retorno de la funcion. Si es 0 quiere decir que no existe el archivo
@@ -122,43 +147,40 @@ existeArchivo $1
 	if [ $aux -eq 0 ]
 	then
 		echo "El archivo $1 que se quiere mover no existe"
-		escribirLog $log "E" "Mover fallido: el archivo $1 no se puede mover porque no existe"		
+		escribirLog $log "ERRO" "Mover fallido: el archivo $1 no se puede mover porque no existe"		
 		exit 2
 	fi
-
+echo "Tercero paso:"
 # tercero: verificamos si el destino y el origen son distintos
-if [ $1 = $2 ]
-then
-	echo "El destino y el origen son iguales. No se movio el archivo $1"
-	escribirLog $log "W" "Mover: el archivo $1 no se movio. El directorio destino y origen son iguales."		
-	exit 3
-fi
+destinoOrigen "$1" "$2" "$log" 
 
+echo "Cuarto paso:"
 # cuarto: verificamos que no exista un archivo con el mismo nombre en el directorio que 
 #	se va a mover
-existeArchivo $2
 
+existeArchivo "$2/`basename $1`"
 	# guardo el retorno de la funcion. Si es 0 quiere decir que no existe el archivo
 	aux=`echo $?`
 	if [ $aux -eq 0 ]
 	then
 		# si no existe, simplemente muevo el archivo
+		echo "El archivo se movio a $2"
 		mv "$1" "$2"
-		escribirLog $log "I" "Mover exitoso: el archivo $1 se movio a $2"		
+		escribirLog $log "INFO" "Mover exitoso: el archivo $1 se movio a $2"		
 	else
 		# ya existe un archivo con ese nombre en ese directorio
 		# creo la carpeta de archivos duplicados si es que no existe		
-		archivo=`dirname "$2"`
+		archivo="$2"
 		directDup "$archivo"
 		# armo el nuevo nombre para el archivo a mover a la carpeta de 
 		# duplicados
 		archivo="$archivo/dup/"
 		#calculo la cantidad de archivos que tiene la carpeta dup
 		cantArch=`find $archivo -maxdepth 1 -type f | wc -l`
-		archivo="$archivo`basename $2`.$cantArch"
-		echo "Aca hay otra salida: $archivo"
+		archivo="$archivo`basename $1`.$cantArch"
+		echo "El archivo se movio a $archivo"
 		mv "$1" "$archivo"
-		escribirLog $log "W" "Mover exitoso: el archivo $1 no se pudo mover a $2 porque ya existe un archivo con ese nombre. El archivo se movio a $archivo"		
+		escribirLog $log "WARN" "Mover exitoso: el archivo $1 no se pudo mover a $2 porque ya existe un archivo con ese nombre. El archivo se movio a $archivo"		
 	fi
 echo "finalizacion de mover"
 exit 0
