@@ -12,6 +12,7 @@
 #	1....Cantidad de parametros recibidos no es 2 o 3
 #	2....El archivo que se quiere mover no existe	 
 #	3....El destino y el origen son iguales
+#	4....El destino no existe
 #
 ###############################################################################
 
@@ -47,7 +48,7 @@ function validarCantParametros(){
 ###############################################################################
 
 function existeArchivo(){
-	if [ -e $1 ] 
+	if [ -e "$1" ] 
 	then 
 		# ya existe un archivo con ese nombre
 		return 1
@@ -92,6 +93,7 @@ function escribirLog(){
 	local comando=`echo "$1" | sed 's/\(.*\).log/\1/'`
 		./glog.sh "$comando" "$2" "$3"
 	else
+	echo "Entrando al else de escribirLog()"
 	fi
 }
 
@@ -114,7 +116,7 @@ function destinoOrigen(){
 	if [ "$archivo" = "$2" ]
 	then
 		echo "El destino y el origen son iguales. No se movio el archivo $1"
-		escribirLog $3 "WARN" "Mover: el archivo $1 no se movio. El directorio destino y origen son iguales."		
+		escribirLog "$3" "WARN" "Mover: el archivo $1 no se movio. El directorio destino y origen son iguales."		
 		exit 3
 	fi
 }
@@ -134,23 +136,29 @@ if [ $# -eq 3 ]
 then
 	log="$3"
 fi
-echo "Segundo paso:"
+
 # segundo: verificamos que el archivo que queremos mover exista
-existeArchivo $1
+existeArchivo "$1"
 	# guardo el retorno de la funcion. Si es 0 quiere decir que no existe el archivo
 	# por lo tanto termina el comando con codigo 2
 	aux=`echo $?`
 	if [ $aux -eq 0 ]
 	then
 		echo "El archivo $1 que se quiere mover no existe"
-		escribirLog $log "ERRO" "Mover fallido: el archivo $1 no se puede mover porque no existe"		
+		escribirLog "$log" "ERROR" "Mover fallido: el archivo $1 no se puede mover porque no existe"		
 		exit 2
 	fi
-echo "Tercero paso:"
+
+# verifico si existe el directorio destino
+if [ ! -d "$2" ]
+then
+	escribirLog "$log" "ERROR" "Mover fallido: el directorio destino $2 no existe"
+	exit 4
+fi
+
 # tercero: verificamos si el destino y el origen son distintos
 destinoOrigen "$1" "$2" "$log" 
 
-echo "Cuarto paso:"
 # cuarto: verificamos que no exista un archivo con el mismo nombre en el directorio que 
 #	se va a mover
 
