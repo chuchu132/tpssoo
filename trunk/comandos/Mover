@@ -90,12 +90,8 @@ function escribirLog(){
 	if [ $1 != "-" ]
 	then
 	local comando=`echo "$1" | sed 's/\(.*\).log/\1/'`
-	echo "Comando que le paso al glog $comando"
-	echo "Comando que le paso al glog $2"
-	echo "Comando que le paso al glog $3"
 		./glog.sh "$comando" "$2" "$3"
 	else
-	echo "Entrando al else de escribirLog()"
 	fi
 }
 
