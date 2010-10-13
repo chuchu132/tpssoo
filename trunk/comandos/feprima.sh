@@ -86,6 +86,27 @@ esta_gravado(){
     fi
 } 
 
+#DescItem N Caracteres. Descripción del Item
+#PrecioItem Importe (N enteros y 2 dígitos decimales). Valor del Item antes de aplicar IVA
+#tasaIVAItem Importe (N enteros y 2 dígitos decimales). Tasa de IVA aplicable al ítem. Los productos no grava dos tienen tasa de iva cero. El valor habitual es 21. Representa un porcentaje.
+#montoIVAItem           Importe (N enteros y 2 dígitos decimales). Monto del Iva resultante de aplicar la tasa al precio.
+
+validarFormatoItems(){
+OIFS=$IFS
+IFS=';'
+array=($1)
+cant_campos=${#array[@]}
+res=0
+if [ $cant_campos -e 4 ]
+then
+	if [ `echo $array[1] | grep "^[0-9]*\.[0-9][0-9]$"` -e 0 ] && [ `echo $array[2] | grep "^[0-9]*\.[0-9][0-9]$"` -e 0 ] &&   [ `echo $array[3] | grep "^[0-9]*\.[0-9][0-9]$"` -e 0 ]
+	then
+		$res=1
+	 fi	
+fi
+IFS=$OIFS
+return $res;
+}
 
 #################################
 #	$1: archivo a validar		#
@@ -98,22 +119,27 @@ validarItems(){
     lineas=`sed 1d $1`
     for linea in lineas
     do
-    local DescItem = `echo $linea | cut -d ';' -f 1`
-    local MontoItem = `echo $linea | cut -d ';' -f 2`
-    local TasaIVAItem = `echo $linea | cut -d ';' -f 3`
-    local MontoIVAItem = `echo $linea | cut -d ';' -f 4`
-    if [ `monto_es_valido $MontoIVAItem $MontoItem $TasaIVAItem` -e 1]
-    then
-	if [ `esta_gravado $TasaIVAItem` -e 1 ]
+	if [ `validarFormatoItems $linea` -e 1 ]
 	then
-	    $suma_monto_gravado = `echo "$suma_monto_gravado + $MontoItem" | bc -l` 
+	    local DescItem = `echo $linea | cut -d ';' -f 1`
+	    local MontoItem = `echo $linea | cut -d ';' -f 2`
+	    local TasaIVAItem = `echo $linea | cut -d ';' -f 3`
+	    local MontoIVAItem = `echo $linea | cut -d ';' -f 4`
+	    if [ `monto_es_valido $MontoIVAItem $MontoItem $TasaIVAItem` -e 1]
+	    then
+		if [ `esta_gravado $TasaIVAItem` -e 1 ]
+		then
+		    $suma_monto_gravado = `echo "$suma_monto_gravado + $MontoItem" | bc -l` 
+		else
+		    $suma_monto_no_gravado = `echo "$suma_monto_no_gravado + $MontoItem" | bc -l` 
+		fi
+		$suma_monto_iva = `echo "$suma_monto_iva + $MontoIVAItem" | bc -l` 
+	    else
+		return 1
+	    fi
 	else
-	    $suma_monto_no_gravado = `echo "$suma_monto_no_gravado + $MontoItem" | bc -l` 
+		return 1
 	fi
-	$suma_monto_iva = `echo "$suma_monto_iva + $MontoIVAItem" | bc -l` 
-    else 
-      return 1
-    fi
     done
     
     #	comparar los valores de los acumuladores con los del encabezado

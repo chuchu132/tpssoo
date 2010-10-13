@@ -84,6 +84,7 @@ export PATH="$PATH:$PWD"
 export RECIBIDOS="$grupo/recibidos"
 export ACEPTADOS="$grupo/aceptados"
 export RECHAZADOS="$grupo/rechazados"
+export ARRIBOS="$grupo/arribos"
 export DIA_HOY=`date +%d`
 export MES_HOY=`date +%m`
 export ANIO_HOY=`date +%Y`
