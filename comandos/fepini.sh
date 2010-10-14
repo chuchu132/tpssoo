@@ -61,6 +61,16 @@ desbloquear(){
 	return $?
 }
 
+#########################################
+#	Setea la var de ambiente FECHA_HOY	#
+#	con la fecha actual con formato		#
+#########################################
+fechaHoy(){
+	DIA_HOY=`date +%d`
+	MES_HOY=`date +%m`
+	ANIO_HOY=`date +%Y`
+	FECHA_HOY="$ANIO_HOY-$MES_HOY-$DIA_HOY"
+}
 
 ##########################
 #	fepini				 #
@@ -115,6 +125,7 @@ fi
 
 export -f bloquear
 export -f desbloquear
+export -f fechaHoy
 
 error=0
 
