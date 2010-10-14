@@ -6,6 +6,12 @@
 #	1	<->	error de ejecucion
 ##############################
 
+##############################
+#	return validaciones
+#	0 <-> invalido - false
+#	1 <-> valido - true
+##############################
+
 
 esDuplicado(){
 	local aceptados=`ls "$ACEPTADOS"`
@@ -61,18 +67,18 @@ return 0; #invalido
 #################################
 validarCabecera(){
 
-	if [`validar_formato_cabecera $1` -e 1 ] 
+	if [`validar_formato_cabecera $1` -eq 1 ] 
 	then
 		#	verifico que el proveedor este en el registro maestro	#
 		local cuit_prov=`head -n 1 "$1" | cut -d ';' -f 1`
-		local resultado=`grep -q "^.*;${cuit_prov};.*;.*;.*;.*$" "$grupo/prin/maepro.txt"`
+		local resultado=`grep "^.*;${cuit_prov};.*;.*;.*;.*$" "$grupo/prin/maepro.txt"`
 		if [ $? -ne 0 ]
 		then
 			echo No existe el proveedor con CUIT $cuit_prov en el archivo maestro de proveedores 
 			glog.sh feprima WARN "No existe el proveedor con CUIT $cuit_prov en el archivo maestro de proveedores"
 			return 1
 		fi
-	
+		#	en $resultado esta el registro del maestro de prov	#
 		#	seteo COND_PAGO para grabarRegistro	#
 		COND_PAGO=`echo "$resultado" | cut -d ';' -f 6`
 	
@@ -102,9 +108,9 @@ validarCabecera(){
 ##################################################################
 monto_es_valido(){
     MontoTemp= `echo "$2 * $3 / 100" | bc -l`
-    if [ $MontoTemp -e $1 ]
+    if [ $MontoTemp -eq $1 ]
     then
-	 if [ `echo $1 | bc -l` < 0 ] -o  [ `echo $2 | bc -l` < 0 ] -o [ `echo $3 | bc -l` < 0 ]
+	 if [ `echo $1 | bc -l` < 0 ] -o [ `echo $2 | bc -l` < 0 ] -o [ `echo $3 | bc -l` < 0 ]
 	 then
 	    return 0; #invalido
 	else
@@ -118,7 +124,7 @@ monto_es_valido(){
 #   $1: %iva                #
 #############################
 esta_gravado(){
-    if [ $1 -e "0.00" ]
+    if [ $1 -eq "0.00" ]
     then
 	return 1; #true
     else
@@ -128,7 +134,7 @@ esta_gravado(){
 
 #DescItem N Caracteres. Descripción del Item
 #PrecioItem Importe (N enteros y 2 dígitos decimales). Valor del Item antes de aplicar IVA
-#tasaIVAItem Importe (N enteros y 2 dígitos decimales). Tasa de IVA aplicable al ítem. Los productos no grava dos tienen tasa de iva cero. El valor habitual es 21. Representa un porcentaje.
+#tasaIVAItem Importe (N enteros y 2 dígitos decimales). Tasa de IVA aplicable al ítem. Los productos no gravados tienen tasa de iva cero. El valor habitual es 21. Representa un porcentaje.
 #montoIVAItem           Importe (N enteros y 2 dígitos decimales). Monto del Iva resultante de aplicar la tasa al precio.
 
 validarFormatoItems(){
@@ -165,9 +171,9 @@ validarItems(){
 	    local MontoItem = `echo $linea | cut -d ';' -f 2`
 	    local TasaIVAItem = `echo $linea | cut -d ';' -f 3`
 	    local MontoIVAItem = `echo $linea | cut -d ';' -f 4`
-	    if [ `monto_es_valido $MontoIVAItem $MontoItem $TasaIVAItem` -e 1]
+	    if [ `monto_es_valido $MontoIVAItem $MontoItem $TasaIVAItem` -eq 1]
 	    then
-		if [ `esta_gravado $TasaIVAItem` -e 1 ]
+		if [ `esta_gravado $TasaIVAItem` -eq 1 ]
 		then
 		    $suma_monto_gravado = `echo "$suma_monto_gravado + $MontoItem" | bc -l` 
 		else

@@ -24,7 +24,7 @@ RUTARECHAZADOS=$RECHAZADOS
 while [ 1 ]
 do
 	# me fijo si existe algun archivo en el directorio de arribos
-	archivos=`ls $RUTAARRIBOS`
+	archivos=`ls "$RUTAARRIBOS"`
 	if [ -n "$archivos" ]
 	then
 		echo ""
@@ -41,25 +41,25 @@ do
 			then
 				echo "Moviendo archivo a recibidos..."
 				#TODO reemplazar por el MOVER
-				mv $RUTAARRIBOS${nombre} $RUTARECIBIDOS
+				mv "$RUTAARRIBOS/${nombre}" "$RUTARECIBIDOS"
 			else
 				echo "Archivo con nombre incorrecto: ${nombre}"
 				echo "Moviendo archivo a rechazados..."
 				#TODO reemplazar por el MOVER
-				mv $RUTAARRIBOS${nombre} $RUTARECHAZADOS			
+				mv "$RUTAARRIBOS/${nombre}" "$RUTARECHAZADOS"			
 			fi 				
 		done
 	else
 		echo "No existen archivos en $RUTAARRIBOS"
 	fi
 	
-	recibidos=`ls $RUTARECIBIDOS`
+	recibidos=`ls "$RUTARECIBIDOS"`
 	if [ -n "$recibidos" ]
 	then
 		echo ""
 		echo "Existen archivos en $RUTARECIBIDOS."
 		# busco en los procesos que se estan corriendo actualmente al proceso feprima.sh
-		x=`ps | grep 'feprima\.sh$'`
+		x=`ps -U $UID | grep 'feprima\.sh$'`
 		# si el grep retorna un valor distinto de 0 quiere decir que no encontro ningun proceso con ese nombre
 		if [ $? -ne 0 ]
 		then

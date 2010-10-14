@@ -5,6 +5,11 @@
 #	1	<-> ERROR
 
 
+
+
+#############################################################
+#	Muestra las variables de ambiente seteadas por fepini	#
+#############################################################
 ambiente(){
 	echo "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
 	echo Ambiente:
@@ -30,11 +35,12 @@ bloquear(){
 	local comando=`basename $1`
 	if [ -a "$grupo/temp/.running_$comando.lck" ]
 	then
-		echo "El comando $comando ya esta siendo ejecutado."
-		glog fepini WARN "El comando $comando ya esta siendo ejecutado."
+		p_id=`grep "^PID=" "$grupo/temp/.running_$comando.lck"`
+		echo "El comando $comando ya esta siendo ejecutado bajo $p_id."
+		glog fepini WARN "El comando $comando ya esta siendo ejecutado bajo $p_id."
 		return 1
 	else
-		echo $comando >> "$grupo/temp/.running_$comando.lck"
+		echo "PID=$$" > "$grupo/temp/.running_$comando.lck"
 		return 0
 	fi
 }
@@ -60,18 +66,25 @@ desbloquear(){
 #	fepini				 #
 ##########################
 
+echo "=========================================================="
+
+
 #	Verifico que el ambiente no haya sido inicializado	#
 if [ ! -z $INI_FEPINI ]
 then
 	if [ $INI_FEPINI -eq 2 ]
 	then
 		echo Fepini ya esta siendo ejecutado
+		glog.sh fepini WARN "Fepini ya esta siendo ejecutado"
+		echo "=========================================================="
 		return 1
 	fi
 	if [ $INI_FEPINI -eq 1 ]
 	then
 		echo El ambiente ya ha sido inicializado 
+		glog.sh fepini WARN "El ambiente ya ha sido inicializado "
 		ambiente
+		echo "=========================================================="
 		return 1
 	fi
 fi
@@ -80,7 +93,6 @@ fi
 
 export INI_FEPINI=2			# indica que fepini esta siendo ejecutado
 export grupo="$PWD/.."		# directorio del trabajo practico 
-export PATH="$PATH:$PWD"	
 export RECIBIDOS="$grupo/recibidos"
 export ACEPTADOS="$grupo/aceptados"
 export RECHAZADOS="$grupo/rechazados"
@@ -89,6 +101,15 @@ export DIA_HOY=`date +%d`
 export MES_HOY=`date +%m`
 export ANIO_HOY=`date +%Y`
 export FECHA_HOY="$ANIO_HOY-$MES_HOY-$DIA_HOY"
+
+#	Si nuestro directorio "comandos" no esta en el PATH lo agrego	#
+
+echo "$PATH" | grep "${PWD}" > /dev/null
+if [ $? -ne 0 ]
+then
+	export PATH="$PATH:$PWD"	
+fi
+
 
 #	Funciones genericas para todos los comandos	#
 
@@ -102,7 +123,7 @@ error=0
 #	Verificar carpetas	#
 for carp in prin prin/old arribos recibidos rechazados aceptados facturas facturas/old facturas/listados comandos comandos/log temp
 do
-	if ! [ -d "$grupo/$carp" ]
+	if [ ! -d "$grupo/$carp" ]
 	then
 		mkdir "$grupo/$carp" > /dev/null
 	fi
@@ -115,18 +136,22 @@ if [ ! -f "$grupo/prin/maepro.txt" ]
 then
 	echo No existe el archivo Maestro de Proveedores >> "$grupo/temp/instalacion.log"
 	error=1
+else
+	chmod 555 "$grupo/prin/maepro.txt"
 fi
 
 if [ ! -f "$grupo/prin/presu.txt" ]
 then
 	echo No existe el archivo de Presupuesto >> "$grupo/temp/instalacion.log"
 	error=1
+else
+	chmod 777 "$grupo/prin/presu.txt"
 fi
 
 
 #	Verificar comandos	#
 
-for cmd in fepini.sh feponio.sh feprima.sh fepago feplist glog.sh Mover startfe stopfe
+for cmd in fepini.sh feponio.sh feprima.sh glog.sh Mover
 do
 	if [ ! -e "$grupo/comandos/$cmd" ]
 	then
@@ -137,29 +162,42 @@ do
 	fi		
 done	
 
+#	Verificar Comandos independientes	#
+
+for cmd in fepago feplist startfe.sh stopfe.sh
+do
+	if [ ! -e "$grupo/comandos/$cmd" ]
+	then
+		echo "No esta instalado el comando $cmd. Esta funcionalidad no estara disponible" >> "$grupo/temp/instalacion.log"
+	else
+		chmod 777 "$grupo/comandos/$cmd"
+	fi		
+done
 
 # # # #
-echo "=========================================================="
+
 if [ $error -eq 0 ]
 then
 	#	Iniciar Feponio	#
 
-	local rdo=`ps | grep "feponio.sh$"`
+	#	Verifico que este usuario no este corriendo el demonio
+	rdo=`ps -U $UID | grep "feponio\.sh$"`
 	if [ $? -ne 0 ]
 	then
 		#	lanzo el demonio
 		feponio.sh &
 		PID_FO=$!
 		#	en el archivo lock guardo el PID	
-		echo "PID=$PID_FO" >> "$grupo/temp/.running_feponio.sh.lck"
+		echo "PID=$PID_FO" > "$grupo/temp/.running_feponio.sh.lck"
 	else
 		#	si ya esta corriendo obtengo su PID
 		PID_FO=`grep "PID=" "$grupo/temp/.running_feponio.sh.lck" | cut -d '=' -f 2`
 	fi
 
 	echo "Inicializacion de Ambiente Concluida"
-	ambiente
 	echo "Demonio corriendo bajo el no.: $PID_FO"
+	cat "$grupo/temp/instalacion.log"
+	ambiente
 	glog.sh fepini INFO "Inicializacion de Ambiente Concluida"
 	glog.sh fepini INFO "Demonio corriendo bajo el no.: $PID_FO"
 	INI_FEPINI=1	#	indica que el ambiente esta inicializado
@@ -168,6 +206,7 @@ else
 	INI_FEPINI=0	#	indica que el ambiente no esta inicializado
 	echo "Inicializacion de Ambiente No fue exitosa. Errores:"
 	cat "$grupo/temp/instalacion.log"
+	ambiente
 
 fi
 echo "=========================================================="
