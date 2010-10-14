@@ -40,13 +40,11 @@ do
 			if [ $? -eq 0 ] 
 			then
 				echo "Moviendo archivo a recibidos..."
-				#TODO reemplazar por el MOVER
-				mv "$RUTAARRIBOS/${nombre}" "$RUTARECIBIDOS"
+				Mover "$RUTAARRIBOS/${nombre}" "$RUTARECIBIDOS"
 			else
 				echo "Archivo con nombre incorrecto: ${nombre}"
 				echo "Moviendo archivo a rechazados..."
-				#TODO reemplazar por el MOVER
-				mv "$RUTAARRIBOS/${nombre}" "$RUTARECHAZADOS"			
+				Mover "$RUTAARRIBOS/${nombre}" "$RUTARECHAZADOS"			
 			fi 				
 		done
 	else

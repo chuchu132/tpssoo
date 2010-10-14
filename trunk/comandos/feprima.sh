@@ -38,7 +38,7 @@ validar_formato_cabecera(){
 OIFS=$IFS
 IFS=';'
 array=($1)
-cant_campos= ${#array[@]}
+cant_campos=${#array[@]}
 if [ $cant_campos -eq 10 ]
 then
 
@@ -67,7 +67,8 @@ return 0; #invalido
 #################################
 validarCabecera(){
 
-	if [`validar_formato_cabecera $1` -eq 1 ] 
+	rdo=`validar_formato_cabecera "$1"`
+	if [ $rdo ]
 	then
 		#	verifico que el proveedor este en el registro maestro	#
 		local cuit_prov=`head -n 1 "$1" | cut -d ';' -f 1`
@@ -81,6 +82,9 @@ validarCabecera(){
 		#	en $resultado esta el registro del maestro de prov	#
 		#	seteo COND_PAGO para grabarRegistro	#
 		COND_PAGO=`echo "$resultado" | cut -d ';' -f 6`
+		
+		#	seteo las variables de fecha actual
+		fechaHoy
 	
 		#	verifico vencimiento del CAE	#
 		local fecha_cae=`head -n 1 "$1" | cut -d ';' -f 6`
@@ -237,15 +241,17 @@ procesar(){
 		if [ -z $? ]
 		then
 			grabarRegistro
-			Mover "${RECIBIDOS}/$file" "$ACEPTADOS"
-	                glog.sh feprima INFO "Factura Aceptada: $file"
+			Mover "${RECIBIDOS}/$file" "$ACEPTADOS" feprima.log
+	        glog.sh feprima INFO "Factura Aceptada: $file"
 		else
 			echo "Factura Errónea, no coinciden los totales: $1"
 			glog.sh feprima ERROR "Factura Errónea no coinciden los totales: $1"
+			Mover "${RECIBIDOS}/$file" "$RECHAZADOS" feprima.log
 		fi
     else
 	    echo "Factura Errónea en registro cabecera: $1"
 	    glog.sh feprima ERROR "Factura Errónea en registro cabecera: $1"
+	    Mover "${RECIBIDOS}/$file" "$RECHAZADOS" feprima.log
     fi
 
 }
@@ -262,10 +268,10 @@ procesarArchivos(){
 	for file in $archivos
 	do
 		glog.sh feprima INFO "Archivo a Procesar: $file"
-		repetido= `esDuplicado $file`
-		if [ $repetido -gt 0 ]
+		repetido=`esDuplicado "$file"`
+		if [ $repetido ]
 		then
-			Mover "${RECIBIDOS}/$file" "$RECHAZADOS" 
+			Mover "${RECIBIDOS}/$file" "$RECHAZADOS" feprima.log
 			glog.sh feprima WARN "Factura Duplicada: $file"
 		else
 			procesar $file
