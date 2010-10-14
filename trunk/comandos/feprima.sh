@@ -13,6 +13,69 @@
 ##############################
 
 
+
+fechaEsValida(){
+if [ !  `echo $1 | grep "^[0-9]\{4\}-[0-1][0-9]-[0-3][0-9]$"` ] 
+then	
+	return 1 #invalida
+fi
+
+OIFS=$IFS
+IFS='-'
+arr=($1)
+
+dd=${arr[2]}
+mm=${arr[1]}
+yy=${arr[0]}
+ 
+days=0
+ 
+if [ $mm -le 0 -o $mm -gt 12 ];
+then
+    IFS=$OFS
+    return 0 #invalida
+fi
+ 
+case $mm in
+   01) days=31;;
+   02) days=28 ;;
+   03) days=31 ;;
+   04) days=30 ;;
+   05) days=31 ;;
+   06) days=30 ;;
+   07) days=31 ;;
+   08) days=31 ;;
+   09) days=30 ;;
+   10) days=31 ;;
+   11) days=30 ;;
+   12) days=31 ;;
+    *)  days=-1 ;;
+esac
+ 
+if [ $mm -eq 2 ]; 
+then
+	if [ $((yy % 4)) -ne 0 ] && [ $((yy % 400)) -eq 0 ] && [ ! $((yy % 100)) -eq 0 ]
+	then
+	   days=29
+	fi
+fi
+
+if [ $dd -le 0 ] || [ $dd -gt $days ]
+then
+	IFS=$OFS
+	return 0 #invalida
+fi
+
+IFS=$OFS
+return 1 #valida
+
+}
+
+
+
+
+
+
 esDuplicado(){
 	local aceptados=`ls "$ACEPTADOS"`
 	for file in $aceptados
@@ -44,7 +107,7 @@ then
 
 	if [ `echo ${array[0]} | grep "^[0-9]\{11\}$"` ] && [ `echo ${array[1]} | grep "^[ABCE]\{1\}$"` ] && [ `echo ${array[2]} | grep "^[0-9]\{3\}[0-8]$"` ] && [ `echo ${array[3}] | grep "^[0-9]\{7\}[0-8]$"` ]
 	then
-		if [ 0 -eq 0 ] #TODO validar que sean fechas 
+		if [ `fechaEsValida ${array[4]}` ] && [ `fechaEsValida ${array[5]}` ] 
 		then
 
 		        if [ `echo ${array[6]} | grep "^[0-9]*\.[0-9][0-9]$"` ] && [ `echo ${array[7]} | grep "^[0-9]*\.[0-9][0-9]$"` ] &&   [ `echo ${array[8]} | grep "^[0-9]*\.[0-9][0-9]$"` ] && [ `echo ${array[9]} | grep "^[0-9]*\.[0-9][0-9]$"` ]
