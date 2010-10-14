@@ -4,12 +4,13 @@
 #pre-condición: el demonio se está ejecutando
 #
 
-x=`ps | grep '^.* feponio\.sh$'
+x=`ps | grep '^.* feponio\.sh$'`
 if [ $? -eq 0 ]
 then
 	echo "Se detiene la ejecución de invonio."
 	pid=`ps | grep '^.* feponio\.sh$' | sed 's/ \?\([0-9]*\).*/\1/'`
 	kill $pid
+	rm -f "$grupo/temp/.running_feponio.sh.lck" > /dev/null
 	echo ""
 	exit 0
 else
