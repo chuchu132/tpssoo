@@ -38,16 +38,16 @@ validar_formato_cabecera(){
 OIFS=$IFS
 IFS=';'
 array=($1)
-cant_campos=${#array[@]}
-if [ $cant_campos -e 10 ]
+cant_campos= ${#array[@]}
+if [ $cant_campos -eq 10 ]
 then
 
-	if [ `echo $array[0] | grep "^[0-9]\{14\}$" -e 0 ] && [ `echo $array[1] | grep "^[ABCE]\{1\}$" -e 0 ] && [ `echo $array[2] | grep "^[0-9]\{3\}[0-8]$" -e 0 ] && [ `echo $array[3] | grep "^[0-9]\{7\}[0-8]$" -e 0 ]
+	if [ `echo ${array[0]} | grep "^[0-9]\{11\}$"` ] && [ `echo ${array[1]} | grep "^[ABCE]\{1\}$"` ] && [ `echo ${array[2]} | grep "^[0-9]\{3\}[0-8]$"` ] && [ `echo ${array[3}] | grep "^[0-9]\{7\}[0-8]$"` ]
 	then
-		if [ 0 -e 0 ] #TODO validar que sean fechas 
+		if [ 0 -eq 0 ] #TODO validar que sean fechas 
 		then
 
-		        if [ `echo $array[6] | grep "^[0-9]*\.[0-9][0-9]$"` -e 0 ] && [ `echo $array[7] | grep "^[0-9]*\.[0-9][0-9]$"` -e 0 ] &&   [ `echo $array[8] | grep "^[0-9]*\.[0-9][0-9]$"` -e 0 ] && [ `echo $array[9] | grep "^[0-9]*\.[0-9][0-9]$"` -e 0 ]
+		        if [ `echo ${array[6]} | grep "^[0-9]*\.[0-9][0-9]$"` ] && [ `echo ${array[7]} | grep "^[0-9]*\.[0-9][0-9]$"` ] &&   [ `echo ${array[8]} | grep "^[0-9]*\.[0-9][0-9]$"` ] && [ `echo ${array[9]} | grep "^[0-9]*\.[0-9][0-9]$"` ]
 		        then
 			IFS=$OIFS       
 			return 1; # valido
@@ -138,20 +138,20 @@ esta_gravado(){
 #montoIVAItem           Importe (N enteros y 2 dígitos decimales). Monto del Iva resultante de aplicar la tasa al precio.
 
 validarFormatoItems(){
-OIFS=$IFS
-IFS=';'
-array=($1)
-cant_campos=${#array[@]}
-res=0
-if [ $cant_campos -e 4 ]
-then
-	if [ `echo $array[1] | grep "^[0-9]*\.[0-9][0-9]$"` -e 0 ] && [ `echo $array[2] | grep "^[0-9]*\.[0-9][0-9]$"` -e 0 ] &&   [ `echo $array[3] | grep "^[0-9]*\.[0-9][0-9]$"` -e 0 ]
+	OIFS=$IFS
+	IFS=';'
+	array=($1)
+	cant_campos=${#array[@]}
+	res=0
+	if [ $cant_campos -eq 4 ]
 	then
-		$res=1
-	 fi	
-fi
-IFS=$OIFS
-return $res;
+		if [ `echo ${array[1]} | grep "^[0-9]*\.[0-9][0-9]$"` ] && [ `echo ${array[2]} | grep "^[0-9]*\.[0-9][0-9]$"` ] &&   [ `echo ${array[3]} | grep "^[0-9]*\.[0-9][0-9]$"` ]
+		then
+			$res=1
+		 fi	
+	fi
+	IFS=$OIFS
+	return $res;
 }
 
 #################################
@@ -165,7 +165,7 @@ validarItems(){
     lineas=`sed 1d $1`
     for linea in lineas
     do
-	if [ `validarFormatoItems $linea` -e 1 ]
+	if [ `validarFormatoItems $linea` -eq 1 ]
 	then
 	    local DescItem = `echo $linea | cut -d ';' -f 1`
 	    local MontoItem = `echo $linea | cut -d ';' -f 2`
@@ -208,14 +208,6 @@ validarItems(){
     return 1
 }
 
-
-#################################
-#	$1: archivo a validar		#
-#################################
-validacionFinal(){
-    return 0    
-}
-
 #############################################
 #	$1: archivo de la factura				#
 # 	necesita seteada la variable COND_PAGO	#
@@ -244,19 +236,12 @@ procesar(){
 		validarItems $1
 		if [ -z $? ]
 		then
-			validacionFinal $1
-			if [ -z $? ]
-			then
-				grabarRegistro
-				Mover "${RECIBIDOS}/$file" "$ACEPTADOS"
-	                        glog.sh feprima INFO "Factura Aceptada: $file"
-			else
-				echo "Factura Errónea, no coinciden los totales: $1"
-				glog.sh feprima ERROR "Factura Errónea no coinciden los totales: $1"
-			fi
+			grabarRegistro
+			Mover "${RECIBIDOS}/$file" "$ACEPTADOS"
+	                glog.sh feprima INFO "Factura Aceptada: $file"
 		else
-			echo "Factura Errónea en registro de ítem: $1"
-			glog.sh feprima ERROR "Factura Errónea en registro de ítem: $1"
+			echo "Factura Errónea, no coinciden los totales: $1"
+			glog.sh feprima ERROR "Factura Errónea no coinciden los totales: $1"
 		fi
     else
 	    echo "Factura Errónea en registro cabecera: $1"
