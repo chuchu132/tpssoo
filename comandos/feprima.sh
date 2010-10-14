@@ -20,42 +20,82 @@ esDuplicado(){
 	done
 }
 
-#################################
-#	$1: archivo a validar		#
-#################################
-validarCabecera(){ 
-	
-	#	verifico que el proveedor este en el registro maestro	#
-	local cuit_prov=`head -n 1 "$1" | cut -d ';' -f 1`
-	local resultado=`grep -q "^.*;${cuit_prov};.*;.*;.*;.*$" "$grupo/prin/maepro.txt"`
-	if [ $? -ne 0 ]
+
+validar_formato_cabecera(){
+#0 CUITProveedor  11 Dígitos. Clave Única de Identificación Tributaria
+#1 codigoTipoComprobante 1 Carácter. VALORES posibles A B C E
+#2 numeroPuntoVenta 4 Caracteres. Valores posibles 0001 a 9998
+#3 numeroComprobante 8 Caracteres. Valores posibles 00000001 a 99999998
+#4 fechaFactura
+#5 fechaVencimientoCAE
+
+OIFS=$IFS
+IFS=';'
+array=($1)
+cant_campos=${#array[@]}
+if [ $cant_campos -e 10 ]
+then
+
+	if [ `echo $array[0] | grep "^[0-9]\{14\}$" -e 0 ] && [ `echo $array[1] | grep "^[ABCE]\{1\}$" -e 0 ] && [ `echo $array[2] | grep "^[0-9]\{3\}[0-8]$" -e 0 ] && [ `echo $array[3] | grep "^[0-9]\{7\}[0-8]$" -e 0 ]
 	then
-		echo No existe el proveedor con CUIT $cuit_prov en el archivo maestro de proveedores 
-		glog.sh feprima WARN "No existe el proveedor con CUIT $cuit_prov en el archivo maestro de proveedores"
-		return 1
-	fi
-	
-	#	seteo COND_PAGO para grabarRegistro	#
-	COND_PAGO=`echo "$resultado" | cut -d ';' -f 6`
-	
-	#	verifico vencimiento del CAE	#
-	local fecha_cae=`head -n 1 "$1" | cut -d ';' -f 6`
-	if [ `echo $fecha_cae | cut -d '-' -f 1` -ge $ANIO_HOY ]
-	then
-		if [ `echo $fecha_cae | cut -d '-' -f 2` -ge $MES_HOY ]
+		if [ 0 -e 0 ] #TODO validar que sean fechas 
 		then
-			if [ `echo $fecha_cae | cut -d '-' -f 3` -gt $DIA_HOY ]
-			then
-				return 0
+
+		        if [ `echo $array[6] | grep "^[0-9]*\.[0-9][0-9]$"` -e 0 ] && [ `echo $array[7] | grep "^[0-9]*\.[0-9][0-9]$"` -e 0 ] &&   [ `echo $array[8] | grep "^[0-9]*\.[0-9][0-9]$"` -e 0 ] && [ `echo $array[9] | grep "^[0-9]*\.[0-9][0-9]$"` -e 0 ]
+		        then
+			IFS=$OIFS       
+			return 1; # valido
 			fi
 		fi
 	fi
-	echo "Factura Vencida: $1"
-	glog.sh feprima WARN "Factura Vencida: $1"
-	return 1
-	#TODO validar formato y validaciones extra
+fi
+IFS=$OIFS
+return 0; #invalido
+
+
 }
 
+
+#################################
+#	$1: archivo a validar		#
+#################################
+validarCabecera(){
+
+	if [`validar_formato_cabecera $1` -e 1 ] 
+	then
+		#	verifico que el proveedor este en el registro maestro	#
+		local cuit_prov=`head -n 1 "$1" | cut -d ';' -f 1`
+		local resultado=`grep -q "^.*;${cuit_prov};.*;.*;.*;.*$" "$grupo/prin/maepro.txt"`
+		if [ $? -ne 0 ]
+		then
+			echo No existe el proveedor con CUIT $cuit_prov en el archivo maestro de proveedores 
+			glog.sh feprima WARN "No existe el proveedor con CUIT $cuit_prov en el archivo maestro de proveedores"
+			return 1
+		fi
+	
+		#	seteo COND_PAGO para grabarRegistro	#
+		COND_PAGO=`echo "$resultado" | cut -d ';' -f 6`
+	
+		#	verifico vencimiento del CAE	#
+		local fecha_cae=`head -n 1 "$1" | cut -d ';' -f 6`
+		if [ `echo $fecha_cae | cut -d '-' -f 1` -ge $ANIO_HOY ]
+		then
+			if [ `echo $fecha_cae | cut -d '-' -f 2` -ge $MES_HOY ]
+			then
+				if [ `echo $fecha_cae | cut -d '-' -f 3` -gt $DIA_HOY ]
+				then
+					return 0
+				fi
+			fi
+		fi
+		echo "Factura Vencida: $1"
+		glog.sh feprima WARN "Factura Vencida: $1"
+		return 1
+	fi
+	return 1
+				
+}
+	
 ##################################################################
 # Chequea, que la cuenta este bien, y q los montos sean positivos#
 #	$1: MontoIVAItem  $2: MontoItem  $3:TasaIVAItem          #
@@ -202,6 +242,8 @@ procesar(){
 			if [ -z $? ]
 			then
 				grabarRegistro
+				Mover "${RECIBIDOS}/$file" "$ACEPTADOS"
+	                        glog.sh feprima INFO "Factura Aceptada: $file"
 			else
 				echo "Factura Errónea, no coinciden los totales: $1"
 				glog.sh feprima ERROR "Factura Errónea no coinciden los totales: $1"
@@ -236,8 +278,6 @@ procesarArchivos(){
 			glog.sh feprima WARN "Factura Duplicada: $file"
 		else
 			procesar $file
-			Mover "${RECIBIDOS}/$file" "$ACEPTADOS"
-			glog.sh feprima INFO "Factura Aceptada: $file"
 		fi
 	done
 	echo "Fin de Feprima"
