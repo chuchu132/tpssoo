@@ -1,0 +1,7 @@
+
+Archivos			Nota
+34567890123456			Ok
+45678901234567			Ok
+12345678901234			Esta mal calculado el ImporteGravado y el noGravado (a lo q dice habria q restarle 10 en ambos casos)
+23456789012345			Esta vencida
+56789012345678			Tiene valores negativos (3 numeros neg)
