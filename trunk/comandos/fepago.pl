@@ -166,8 +166,11 @@ close(FD);
 #		$0 archivo $1 dir_dest
 #################################
 sub backup_archivo{
-
-
+	@num=`ls | sed \'s/.*\\.\\(.*\\)\$/\\1/g\' | sort -n`;
+	$ultima_version= $num[-1];
+	$ultima_version++;
+	$cmd = "cp $_[0] $_[1]/$_[0]\.$ultima_version";
+	system($cmd);
 }
 
 #################################
