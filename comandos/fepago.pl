@@ -85,16 +85,16 @@ my($monto,$fuente);
 $monto = $_[0];
 if( $monto < 1000){
 	$fuente="11";
-} else if ( $monto >= 1000 && $monto<10000 ){
+} elsif ( $monto >= 1000 && $monto<10000 ){
 	$fuente="12";
-} else if ( $monto >= 1000 && $monto<10000 ){
+} elsif ( $monto >= 1000 && $monto<10000 ){
 	$fuente="13";
-} else if ( $monto >= 10000 && $monto<150000 ){
+} elsif ( $monto >= 10000 && $monto<150000 ){
 	$fuente="14";
-} else if ( $monto >= 150000 ){
+} elsif ( $monto >= 150000 ){
 	$fuente="15";
 }
-return ($monto);
+return ($fuente);
 }
 
 ####################################
