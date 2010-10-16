@@ -15,9 +15,10 @@
 
 
 fechaEsValida(){
-if [ !  `echo $1 | grep "^[0-9]\{4\}-[0-1][0-9]-[0-3][0-9]$"` ] 
+if [ ! `echo $1 | grep "^[0-9]\{4\}-[0-1][0-9]-[0-3][0-9]$"` ] 
 then	
-	return 1 #invalida
+	echo LA FECHA NO TIENE EL FORMATO
+	return 0 #invalida
 fi
 
 OIFS=$IFS
@@ -33,6 +34,7 @@ days=0
 if [ $mm -le 0 -o $mm -gt 12 ];
 then
     IFS=$OFS
+    echo ERROR MES!
     return 0 #invalida
 fi
  
@@ -63,10 +65,12 @@ fi
 if [ $dd -le 0 ] || [ $dd -gt $days ]
 then
 	IFS=$OFS
+	echo ERROR DIAS!!!!!!!!!
 	return 0 #invalida
 fi
 
 IFS=$OFS
+echo VALIDA!
 return 1 #valida
 
 }
@@ -105,23 +109,22 @@ cant_campos=${#array[@]}
 if [ $cant_campos -eq 10 ]
 then
 
-	if [ `echo ${array[0]} | grep "^[0-9]\{11\}$"` ] && [ `echo ${array[1]} | grep "^[ABCE]\{1\}$"` ] && [ `echo ${array[2]} | grep "^[0-9]\{3\}[0-8]$"` ] && [ `echo ${array[3}] | grep "^[0-9]\{7\}[0-8]$"` ]
+	if [ `echo ${array[1]} | grep "^[0-9]\{11\}$"` ] && [ `echo ${array[2]} | grep "^[ABCE]\{1\}$"` ] && [ `echo ${array[3]} | grep "^[0-9]\{3\}[0-8]$"` ] && [ `echo ${array[4]} | grep "^[0-9]\{7\}[0-8]$"` ]
 	then
-		if [ `fechaEsValida ${array[4]}` ] && [ `fechaEsValida ${array[5]}` ] 
+		if [ `fechaEsValida ${array[5]}` ] && [ `fechaEsValida ${array[6]}` ] 
 		then
-
-		        if [ `echo ${array[6]} | grep "^[0-9]*\.[0-9][0-9]$"` ] && [ `echo ${array[7]} | grep "^[0-9]*\.[0-9][0-9]$"` ] &&   [ `echo ${array[8]} | grep "^[0-9]*\.[0-9][0-9]$"` ] && [ `echo ${array[9]} | grep "^[0-9]*\.[0-9][0-9]$"` ]
-		        then
-			IFS=$OIFS       
-			return 1; # valido
+	        if [ `echo ${array[7]} | grep "^[0-9]*\.[0-9][0-9]$"` ] && [ `echo ${array[8]} | grep "^[0-9]*\.[0-9][0-9]$"` ] &&   [ `echo ${array[9]} | grep "^[0-9]*\.[0-9][0-9]$"` ] && [ `echo ${array[10]} | grep "^[0-9]*\.[0-9][0-9]$"` ]
+	        then
+				IFS=$OIFS       
+				echo ______________ VALIDAR FORMATO CABECEERA VALIDO _______________________
+				return 1; # valido
 			fi
 		fi
 	fi
 fi
 IFS=$OIFS
+echo ______________ VALIDAR FORMATO CABECERA NO VALIDO _______________________
 return 0; #invalido
-
-
 }
 
 
@@ -130,8 +133,8 @@ return 0; #invalido
 #################################
 validarCabecera(){
 
-	rdo=`validar_formato_cabecera "$1"`
-	if [ $rdo ]
+	validar_formato_cabecera "$1"
+	if [ $? -eq 1 ]
 	then
 		#	verifico que el proveedor este en el registro maestro	#
 		local cuit_prov=`head -n 1 "$1" | cut -d ';' -f 1`
@@ -151,11 +154,11 @@ validarCabecera(){
 	
 		#	verifico vencimiento del CAE	#
 		local fecha_cae=`head -n 1 "$1" | cut -d ';' -f 6`
-		if [ `echo $fecha_cae | cut -d '-' -f 1` -ge $ANIO_HOY ]
+		if [ $ANIO_HOY -ge `echo $fecha_cae | cut -d '-' -f 1` ]
 		then
-			if [ `echo $fecha_cae | cut -d '-' -f 2` -ge $MES_HOY ]
+			if [ $MES_HOY -ge `echo $fecha_cae | cut -d '-' -f 2` ]
 			then
-				if [ `echo $fecha_cae | cut -d '-' -f 3` -gt $DIA_HOY ]
+				if [ $DIA_HOY -gt `echo $fecha_cae | cut -d '-' -f 3` ]
 				then
 					return 0
 				fi
@@ -179,11 +182,14 @@ monto_es_valido(){
     then
 	 if [ `echo $1 | bc -l` < 0 ] -o [ `echo $2 | bc -l` < 0 ] -o [ `echo $3 | bc -l` < 0 ]
 	 then
+	 				echo ______________ MONTO  INVALIDO _______________________
 	    return 0; #invalido
 	else
+					echo ______________ MONTO ES VALIDO _______________________
 	    return 1; #valido
 	fi
     else
+    				echo ______________ MONTO INVALIDO _______________________
 	return 0; #invalido
     fi
 }
@@ -221,9 +227,13 @@ validarFormatoItems(){
 	return $res;
 }
 
-#################################
-#	$1: archivo a validar		#
-#################################
+#####################################
+#	Valida los items de la factura	#
+#	$1: archivo a validar			#
+#	return 	0 <-> OK				#
+#			1 <-> error formato		#
+#			2 <-> error totales		#
+#####################################
 validarItems(){
     local suma_monto_gravado
     local suma_monto_no_gravado
@@ -265,14 +275,14 @@ validarItems(){
     	local total=`echo "$suma_monto_iva + $suma_monto_no_gravado + $suma_monto_gravado" | bc -l`
     	if [ $total -eq `head -n 1 "$1" | cut -d ';' -f 10` ]
     	then
+    		echo _____________los montos concuerdan ___________
     		return 0 	# Los montos concuerdan con el encabezado
     	fi
     fi
     fi
     fi
     
-    echo Los montos no concuerdan con el encabezado 
-    return 1
+    return 2
 }
 
 #############################################
@@ -300,17 +310,26 @@ procesar(){
     validarCabecera $1
     if [ -z $? ]
     then
-		validarItems $1
-		if [ -z $? ]
+		local rdo=`validarItems $1`
+		if [ -z $rdo ]
 		then
 			grabarRegistro
 			Mover "${RECIBIDOS}/$file" "$ACEPTADOS" feprima.log
 	        glog.sh feprima INFO "Factura Aceptada: $file"
-		else
+		fi
+		if [ $rdo -eq 2 ]
+		then
 			echo "Factura Errónea, no coinciden los totales: $1"
 			glog.sh feprima ERROR "Factura Errónea no coinciden los totales: $1"
 			Mover "${RECIBIDOS}/$file" "$RECHAZADOS" feprima.log
 		fi
+		if [ $rdo -eq 1 ]
+		then
+			echo "Factura Errónea en registro item: $1"
+			glog.sh feprima ERROR "Factura Errónea en registro item: $1"
+			Mover "${RECIBIDOS}/$file" "$RECHAZADOS" feprima.log
+		fi
+		
     else
 	    echo "Factura Errónea en registro cabecera: $1"
 	    glog.sh feprima ERROR "Factura Errónea en registro cabecera: $1"
@@ -323,6 +342,7 @@ procesarArchivos(){
 
 	cant_arch=`ls -l "$RECIBIDOS" | wc -l`
 	cant_arch=`echo "$cant_arch - 1" | bc -l`
+	echo "==================================="
 	echo "Inicio de Feprima: $cant_arch"
 	glog.sh feprima INFO "=============================="
 	glog.sh feprima INFO "Inicio de Feprima: $cant_arch" 
@@ -341,12 +361,10 @@ procesarArchivos(){
 		fi
 	done
 	echo "Fin de Feprima"
+	echo "==================================="
 	glog.sh feprima INFO "Fin de Feprima"
 	glog.sh feprima INFO "=============================="
 }
-
-
-
 
 #########################
 # feprima				#
@@ -362,9 +380,9 @@ bloquear "$0"
 rdo=$?
 if [ $rdo -eq 0 ]
 then
-	procesarArchivos
-	desbloquear "$0"
-	rdo=$?
+        procesarArchivos
+        desbloquear "$0"
+        rdo=$?
 fi
 
 exit $rdo

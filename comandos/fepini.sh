@@ -21,45 +21,46 @@ ambiente(){
 }
 
 #################################################
-#	guarda que el comando esta siendo ejecutado	#
-#	$1: nombre del comando						#
-#	return 1 <-> el comando esta en ejecucion	#
+#       guarda que el comando esta siendo ejecutado     #
+#       $1: nombre del comando                                          #
+#       return 1 <-> el comando esta en ejecucion       #
 #################################################
 bloquear(){
-	if [ $# -lt 1 ]
-	then
-		echo "*** bloquear recibe el nombre del comando ***"
-		return 1
-	fi
-	
-	local comando=`basename $1`
-	if [ -a "$grupo/temp/.running_$comando.lck" ]
-	then
-		p_id=`grep "^PID=" "$grupo/temp/.running_$comando.lck"`
-		echo "El comando $comando ya esta siendo ejecutado bajo $p_id."
-		glog fepini WARN "El comando $comando ya esta siendo ejecutado bajo $p_id."
-		return 1
-	else
-		echo "PID=$$" > "$grupo/temp/.running_$comando.lck"
-		return 0
-	fi
+        if [ $# -lt 1 ]
+        then
+                echo "*** bloquear recibe el nombre del comando ***"
+                return 1
+        fi
+        
+        local comando=`basename $1`
+        if [ -a "$grupo/temp/.running_$comando.lck" ]
+        then
+                p_id=`grep "^PID=" "$grupo/temp/.running_$comando.lck"`
+                echo "El comando $comando ya esta siendo ejecutado bajo $p_id."
+                glog fepini WARN "El comando $comando ya esta siendo ejecutado bajo $p_id."
+                return 1
+        else
+                echo "PID=$$" > "$grupo/temp/.running_$comando.lck"
+                return 0
+        fi
 }
 
-#############################
-#	 borrar archivo lock	#
-# 	 $1: nombre comando		#
-#############################
+#########################
+#	borrar archivo lock	#
+#	$1: nombre comando	#
+#########################
 desbloquear(){
-	if [ $# -lt 1 ]
-	then
-		echo "*** desbloquear recibe el nombre del comando ***"
-		return 1
-	fi
-	
-	local comando=`basename $1`
-	rm -f "$grupo/temp/.running_$comando.lck" > /dev/null
-	return $?
+        if [ $# -lt 1 ]
+        then
+                echo "*** desbloquear recibe el nombre del comando ***"
+                return 1
+        fi
+        
+        local comando=`basename $1`
+        rm -f "$grupo/temp/.running_$comando.lck" > /dev/null
+        return $?
 }
+
 
 #########################################
 #	Setea la var de ambiente FECHA_HOY	#
@@ -85,14 +86,12 @@ then
 	if [ $INI_FEPINI -eq 2 ]
 	then
 		echo Fepini ya esta siendo ejecutado
-		glog.sh fepini WARN "Fepini ya esta siendo ejecutado"
 		echo "=========================================================="
 		return 1
 	fi
 	if [ $INI_FEPINI -eq 1 ]
 	then
 		echo El ambiente ya ha sido inicializado 
-		glog.sh fepini WARN "El ambiente ya ha sido inicializado "
 		ambiente
 		echo "=========================================================="
 		return 1
@@ -123,10 +122,9 @@ fi
 
 #	Funciones genericas para todos los comandos	#
 
+export -f fechaHoy
 export -f bloquear
 export -f desbloquear
-export -f fechaHoy
-
 error=0
 
 #	Validacion de la instalacion	#
@@ -176,7 +174,7 @@ done
 
 #	Verificar Comandos independientes	#
 
-for cmd in fepago feplist startfe.sh stopfe.sh
+for cmd in fepago.pl feplist startfe.sh stopfe.sh
 do
 	if [ ! -e "$grupo/comandos/$cmd" ]
 	then
@@ -190,20 +188,20 @@ done
 
 if [ $error -eq 0 ]
 then
+	INI_FEPINI=1	#	indica que el ambiente esta inicializado
+	
 	#	Iniciar Feponio	#
 
-	#	Verifico que este usuario no este corriendo el demonio
-	rdo=`ps -U $UID | grep "feponio\.sh$"`
+	#	Verifico si esta corriendo el demonio
+	rdo=`ps | grep "feponio\.sh$"`
 	if [ $? -ne 0 ]
 	then
 		#	lanzo el demonio
 		feponio.sh &
 		PID_FO=$!
-		#	en el archivo lock guardo el PID	
-		echo "PID=$PID_FO" > "$grupo/temp/.running_feponio.sh.lck"
 	else
 		#	si ya esta corriendo obtengo su PID
-		PID_FO=`grep "PID=" "$grupo/temp/.running_feponio.sh.lck" | cut -d '=' -f 2`
+		PID_FO=`ps | grep '^.* feprima\.sh$' | sed 's/ \?\([0-9]*\).*/\1/'`
 	fi
 
 	echo "Inicializacion de Ambiente Concluida"
@@ -212,7 +210,8 @@ then
 	ambiente
 	glog.sh fepini INFO "Inicializacion de Ambiente Concluida"
 	glog.sh fepini INFO "Demonio corriendo bajo el no.: $PID_FO"
-	INI_FEPINI=1	#	indica que el ambiente esta inicializado
+	glog.sh fepini INFO "grupo = $grupo"
+	glog.sh fepini INFO "PATH = $PATH"
 	
 else
 	INI_FEPINI=0	#	indica que el ambiente no esta inicializado

@@ -164,7 +164,7 @@ existeArchivo "$2/`basename "$1"`"
 	if [ $aux -eq 0 ]
 	then
 		# si no existe, simplemente muevo el archivo
-		echo "El archivo se movio a $2"
+		#echo "El archivo se movio a $2"
 		mv "$1" "$2"
 		escribirLog "$log" "INFO" "Mover exitoso: el archivo $1 se movio a $2"		
 	else
@@ -178,7 +178,7 @@ existeArchivo "$2/`basename "$1"`"
 		#calculo la cantidad de archivos que tiene la carpeta dup
 		cantArch=`find "$archivo" -maxdepth 1 -type f | wc -l`
 		archivo="$archivo`basename "$1"`.$cantArch"
-		echo "El archivo se movio a $archivo"
+		#echo "El archivo se movio a $archivo"
 		mv "$1" "$archivo"
 		escribirLog "$log" "WARN" "Mover exitoso: el archivo $1 no se pudo mover a $2 porque ya existe un archivo con ese nombre. El archivo se movio a $archivo"		
 	fi
