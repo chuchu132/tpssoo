@@ -5,3 +5,5 @@ Archivos			Nota
 12345678901234			Esta mal calculado el ImporteGravado y el noGravado (a lo q dice habria q restarle 10 en ambos casos)
 23456789012345			Esta vencida
 56789012345678			Tiene valores negativos (3 numeros neg)
+67890123456789			Fecha invalida. Dice: 2010-02-30
+78901234567890			Esta mal el separador decimal. Es una coma en lugar de pto. Y el separador de de campo de los registros de item son tab en lugar de ;
