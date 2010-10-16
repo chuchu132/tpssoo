@@ -46,7 +46,7 @@ function validarCantParametros(){
 ###############################################################################
 
 function existeArchivo(){
-	if [ -e "$1" ] 
+	if [ -f "$1" ] 
 	then 
 		# ya existe un archivo con ese nombre
 		return 1
@@ -68,7 +68,7 @@ function directDup(){
 	local direct="$1/dup"
 	if [ ! -d "$direct" ]
 	then
-		mkdir -p $direct		
+		mkdir -p "$direct"
 	fi
 }
 
