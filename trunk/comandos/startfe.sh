@@ -24,8 +24,7 @@ else
 		echo "Se inicia la ejecución de feponio"
 		feponio.sh&
 		PID_FO=$!
-		#	en el archivo lock guardo el PID	
-		echo "PID=$PID_FO" > "$grupo/temp/.running_feponio.sh.lck"
+		echo "Demonio corriendo bajo no.:$PID_FO"
 		echo ""
 		exit 0
 	fi

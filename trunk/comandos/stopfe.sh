@@ -7,14 +7,13 @@
 x=`ps | grep '^.* feponio\.sh$'`
 if [ $? -eq 0 ]
 then
-	echo "Se detiene la ejecución de invonio."
+	echo "Se detiene la ejecución de feponio."
 	pid=`ps | grep '^.* feponio\.sh$' | sed 's/ \?\([0-9]*\).*/\1/'`
 	kill $pid
-	rm -f "$grupo/temp/.running_feponio.sh.lck" > /dev/null
 	echo ""
 	exit 0
 else
-	echo "Error: invonio no se está ejecutando"
+	echo "Error: feponio no se está ejecutando"
 	echo ""
 	exit 1
 fi

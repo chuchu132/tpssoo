@@ -20,6 +20,16 @@ RUTARECHAZADOS=$RECHAZADOS
 #MENOR=00000000000000
 #MAYOR=99999999999999
 
+# 	Verificar ambiente	#
+if [ -z $INI_FEPINI ]
+then
+	echo No se ha inicializado el ambiente. Debe ejecutarse el comando \". fepini.sh\" previamente.
+	./glog.sh feponio SERROR "No se ha inicializado el ambiente."
+	exit 1
+fi
+
+#	tiempo para dejar terminar a fepini
+sleep 2	
 
 while [ 1 ]
 do
@@ -57,7 +67,7 @@ do
 		echo ""
 		echo "Existen archivos en $RUTARECIBIDOS."
 		# busco en los procesos que se estan corriendo actualmente al proceso feprima.sh
-		x=`ps -U $UID | grep 'feprima\.sh$'`
+		x=`ps | grep 'feprima\.sh$'`
 		# si el grep retorna un valor distinto de 0 quiere decir que no encontro ningun proceso con ese nombre
 		if [ $? -ne 0 ]
 		then
