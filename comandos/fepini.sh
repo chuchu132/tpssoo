@@ -157,6 +157,7 @@ then
 	error=1
 else
 	chmod 777 "$grupo/prin/presu.txt"
+	export PRESUPUESTO="$grupo/prin/presu.txt"
 fi
 
 
