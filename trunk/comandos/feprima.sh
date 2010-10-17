@@ -156,14 +156,24 @@ validarCabecera(){
 	
 		#	verifico vencimiento del CAE	#
 		local fecha_cae=`head -n 1 "$1" | cut -d ';' -f 6`
-		if [ $ANIO_HOY -ge `echo $fecha_cae | cut -d '-' -f 1` ]
+		if [ $ANIO_HOY -lt `echo $fecha_cae | cut -d '-' -f 1` ]
 		then
-			if [ $MES_HOY -ge `echo $fecha_cae | cut -d '-' -f 2` ]
+			return 0	 # Factura en fecha
+		else
+			if [ $ANIO_HOY -eq `echo $fecha_cae | cut -d '-' -f 1` ]
 			then
-				if [ $DIA_HOY -gt `echo $fecha_cae | cut -d '-' -f 3` ]
+			if [ $MES_HOY -lt `echo $fecha_cae | cut -d '-' -f 2` ]
+			then 
+				return 0
+			else
+				if [ $MES_HOY -eq `echo $fecha_cae | cut -d '-' -f 2` ]
 				then
-					return 0
+				if [ $DIA_HOY -le `echo $fecha_cae | cut -d '-' -f 3` ]
+				then
+					return 0	
 				fi
+				fi
+			fi
 			fi
 		fi
 		echo "Factura Vencida: $1"
@@ -241,30 +251,31 @@ validarItems(){
     local suma_monto_no_gravado
     local suma_monto_iva
     
-    lineas=`sed 1d $1`
+    lineas=`sed 1d "$1"`
     for linea in lineas
     do
-	if [ `validarFormatoItems $linea` -eq 1 ]
-	then
-	    local DescItem = `echo $linea | cut -d ';' -f 1`
-	    local MontoItem = `echo $linea | cut -d ';' -f 2`
-	    local TasaIVAItem = `echo $linea | cut -d ';' -f 3`
-	    local MontoIVAItem = `echo $linea | cut -d ';' -f 4`
-	    if [ `monto_es_valido $MontoIVAItem $MontoItem $TasaIVAItem` -eq 1]
-	    then
-		if [ `esta_gravado $TasaIVAItem` -eq 1 ]
+		validarFormatoItems "$linea"
+		if [ $? -eq 1 ]
 		then
-		    $suma_monto_gravado = `echo "$suma_monto_gravado + $MontoItem" | bc -l` 
+			local DescItem = `echo $linea | cut -d ';' -f 1`
+			local MontoItem = `echo $linea | cut -d ';' -f 2`
+			local TasaIVAItem = `echo $linea | cut -d ';' -f 3`
+			local MontoIVAItem = `echo $linea | cut -d ';' -f 4`
+			if [ `monto_es_valido $MontoIVAItem $MontoItem $TasaIVAItem` -eq 1]
+			then
+			if [ `esta_gravado $TasaIVAItem` -eq 1 ]
+			then
+				$suma_monto_gravado = `echo "$suma_monto_gravado + $MontoItem" | bc -l` 
+			else
+				$suma_monto_no_gravado = `echo "$suma_monto_no_gravado + $MontoItem" | bc -l` 
+			fi
+			$suma_monto_iva = `echo "$suma_monto_iva + $MontoIVAItem" | bc -l` 
+			else
+			return 1
+			fi
 		else
-		    $suma_monto_no_gravado = `echo "$suma_monto_no_gravado + $MontoItem" | bc -l` 
+			return 1
 		fi
-		$suma_monto_iva = `echo "$suma_monto_iva + $MontoIVAItem" | bc -l` 
-	    else
-		return 1
-	    fi
-	else
-		return 1
-	fi
     done
     
     #	comparar los valores de los acumuladores con los del encabezado
@@ -310,12 +321,13 @@ grabarRegistro(){
 #################################
 procesar(){
     validarCabecera "${RECIBIDOS}/$1"
-    if [ -z $? ]
+    if [ $? -eq 0 ]
     then
-		local rdo=`validarItems $1`
-		if [ -z $rdo ]
+		validarItems "${RECIBIDOS}/$1"
+		local rdo=$?
+		if [ $rdo -eq 0 ]
 		then
-			grabarRegistro
+			grabarRegistro "${RECIBIDOS}/$1"
 			Mover "${RECIBIDOS}/$file" "$ACEPTADOS" feprima.log
 	        glog.sh feprima INFO "Factura Aceptada: $file"
 		fi
@@ -352,10 +364,12 @@ procesarArchivos(){
 	archivos=`ls "$RECIBIDOS"`
 	for file in $archivos
 	do
+		echo "Archivo a Procesar: $file"
 		glog.sh feprima INFO "Archivo a Procesar: $file"
 		repetido=`esDuplicado "$file"`
 		if [ $repetido ]
 		then
+			echo "Factura Duplicada: $file"
 			Mover "${RECIBIDOS}/$file" "$RECHAZADOS" feprima.log
 			glog.sh feprima WARN "Factura Duplicada: $file"
 		else
