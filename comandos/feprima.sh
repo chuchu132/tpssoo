@@ -248,9 +248,9 @@ validarFormatoItems(){
 #			2 <-> error totales		#
 #####################################
 validarItems(){
-    local suma_monto_gravado
-    local suma_monto_no_gravado
-    local suma_monto_iva
+    local suma_monto_gravado=0
+    local suma_monto_no_gravado=0
+    local suma_monto_iva=0
     OIFS=$IFS
 IFS='
 '
