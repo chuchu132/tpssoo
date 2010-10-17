@@ -1,0 +1,8 @@
+./feplist.pl -b										# salida: display 											entrada: $GRUPO/prin/presu.txt
+./feplist.pl -b -o=all								# salida: display & $GRUPO/facturas/listados/presu.lst  	entrada: $GRUPO/prin/presu.txt
+./feplist.pl -b -o=all:/home/listado.lst			# salida: display & /home/nombre.lst  						entrada: $GRUPO/prin/presu.txt
+./feplist.pl -b -o=display							# salida: $GRUPO/facturas/listados/presu.lst 				entrada: $GRUPO/prin/presu.txt
+./feplist.pl -b -o=file								# salida: $GRUPO/facturas/listados/presu.lst 				entrada: $GRUPO/prin/presu.txt
+./feplist.pl -b -o=file:/home/nombre.lst			# salida: /home/nombre.lst									entrada: $GRUPO/prin/presu.txt
+./feplist.pl -b -o=file:/home/salida -i=./prin		# salida: /home/salida										entrada: ./prin/presu.txt
+./feplist.pl -b -i=./prin							# salida: display											entrada: ./prin/presu.txt
