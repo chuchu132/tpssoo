@@ -212,6 +212,7 @@ echo "MontoTemp $MontoTemp"
 esta_gravado(){
     if [ "$1" = "0.00" ]
     then
+	echo "esta_gravado Entro a q es 0"
 	return 0
 	else
 	echo esta gravadooooooooooooooooooooo
@@ -252,6 +253,7 @@ validarItems(){
     local suma_monto_gravado=0
     local suma_monto_no_gravado=0
     local suma_monto_iva=0
+local total=0
     OIFS=$IFS
 IFS='
 '
@@ -265,9 +267,6 @@ IFS='
 			local MontoItem=`echo $linea | cut -d ';' -f 2`
 			local TasaIVAItem=`echo $linea | cut -d ';' -f 3`
 			local MontoIVAItem=`echo $linea | cut -d ';' -f 4`
-			echo "MontoItem: $MontoItem"
-			echo "TasaIVAItem: $TasaIVAItem"
-			echo "MontoIVAItem: $MontoIVAItem"
 			monto_es_valido $MontoIVAItem $MontoItem $TasaIVAItem
 			if [ $? -eq 1 ]
 			then
@@ -292,20 +291,25 @@ IFS='
     done
     
     #	comparar los valores de los acumuladores con los del encabezado
-    if [ "$suma_monto_no_gravado" = "`head -n 1 "$1" | cut -d ';' -f 7`" ]
+	echo "Comparacion con el encabezado"
+
+echo "suma_monto_no_gravado: $suma_monto_no_gravado y lo otro `head -n 1 "$1" | cut -d ';' -f 7`"
+    if [ "$suma_monto_no_gravado" = "`head -n 1 "$1" | cut -d ';' -f 8`" ]
     then
     echo NG ok
-    if [ "$suma_monto_gravado" = "`head -n 1 "$1" | cut -d ';' -f 8`" ]
+    if [ "$suma_monto_gravado" = "`head -n 1 "$1" | cut -d ';' -f 7`" ]
     then
     echo G OK
     if [ "$suma_monto_iva" = "`head -n 1 "$1" | cut -d ';' -f 9`" ]
     then
     echo I OK
-    	local total=`echo "$suma_monto_iva + $suma_monto_no_gravado + $suma_monto_gravado" | bc -l`
+	total=`echo "$suma_monto_iva + $suma_monto_no_gravado + $suma_monto_gravado" | bc -l`
     	if [ "$total" = "`head -n 1 "$1" | cut -d ';' -f 10`" ]
     	then
     		echo _____________los montos concuerdan ___________
     		return 0 	# Los montos concuerdan con el encabezado
+	else
+		echo "El total dio $total"
     	fi
     fi
     fi
