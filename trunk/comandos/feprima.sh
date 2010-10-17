@@ -232,7 +232,7 @@ validarFormatoItems(){
 	then
 		if [ `echo ${array[1]} | grep "^[0-9]*\.[0-9][0-9]$"` ] && [ `echo ${array[2]} | grep "^[0-9]*\.[0-9][0-9]$"` ] && [ `echo ${array[3]} | grep "^[0-9]*\.[0-9][0-9]$"` ]
 		then
-			res=0
+			res=1
 		fi	
 	fi
 	IFS=$OIFS
