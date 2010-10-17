@@ -118,14 +118,12 @@ then
 	        if [ `echo ${array[6]} | grep "^[0-9]*\.[0-9][0-9]$"` ] && [ `echo ${array[7]} | grep "^[0-9]*\.[0-9][0-9]$"` ] &&   [ `echo ${array[8]} | grep "^[0-9]*\.[0-9][0-9]$"` ] && [ `echo ${array[9]} | grep "^[0-9]*\.[0-9][0-9]$"` ]
 	        then
 				IFS=$OIFS       
-				echo ______________ VALIDAR FORMATO CABECEERA VALIDO _______________________
 				return 1; # valido
 			fi
 		fi
 	fi
 fi
 IFS=$OIFS
-echo ______________ VALIDAR FORMATO CABECERA NO VALIDO _______________________
 return 0; #invalido
 }
 
@@ -194,16 +192,16 @@ monto_es_valido(){
 #echo "MontoTemp: $MontoTemp......deberia darme: $1"
    if [ $MontoTemp = $1 ]
     then
-	 if [ "$1" "<" "0" ] || [ "$2" "<" "0" ] || [  "$3" "<" "0" ]
+	 if [ "$2" = "0.00" ]
 	 then
-	 				echo ______________ MONTO  INVALIDO _______________________
+	 				echo ______________ MONTO  ITEM es CERO _______________________
 	    return 0 #invalido
 	else
 					echo ______________ MONTO ES VALIDO _______________________
 	    return 1 #valido
 	fi
     else
-    				echo ______________ MONTO INVALIDO _______________________
+    				echo ______________ MONTO IVA ITEM INVALIDO _______________________
 	return 0 #invalido
     fi
 }
@@ -211,11 +209,12 @@ monto_es_valido(){
 #   $1: %iva                #
 #############################
 esta_gravado(){
-    if [ $1 = "0.00" ]
+    if [ "$1" = "0.00" ]
     then
-	return 1; #true
-    else
-	return 0; #false
+	return 0
+	else
+	echo esta gravadooooooooooooooooooooo
+	return 1
     fi
 } 
 
@@ -268,18 +267,18 @@ IFS='
 			monto_es_valido $MontoIVAItem $MontoItem $TasaIVAItem
 			if [ $? -eq 1 ]
 			then
-			esta_gravado $TasaIVAItem
-			if [ $? -eq 1 ]
-			then
-				suma_monto_gravado=`echo "$suma_monto_gravado + $MontoItem" | bc -l` 
+				esta_gravado $TasaIVAItem
+				if [ $? -eq 1 ]
+				then
+					suma_monto_gravado=`echo "$suma_monto_gravado + $MontoItem" | bc -l` 
+				else
+					suma_monto_no_gravado=`echo "$suma_monto_no_gravado + $MontoItem" | bc -l` 
+				fi
+				suma_monto_iva=`echo "$suma_monto_iva + $MontoIVAItem" | bc -l` 
 			else
-				suma_monto_no_gravado=`echo "$suma_monto_no_gravado + $MontoItem" | bc -l` 
-			fi
-			suma_monto_iva=`echo "$suma_monto_iva + $MontoIVAItem" | bc -l` 
-			else
-			echo ___monto invalido ____
-			IFS=$OFS
-			return 1
+				echo ___monto invalido ____
+				IFS=$OFS
+				return 1
 			fi
 		else
 			echo .-.-.monto invalido -.-.
@@ -289,14 +288,17 @@ IFS='
     done
     
     #	comparar los valores de los acumuladores con los del encabezado
-    if [ $suma_monto_no_gravado -eq `head -n 1 "$1" | cut -d ';' -f 7` ]
+    if [ "$suma_monto_no_gravado" = "`head -n 1 "$1" | cut -d ';' -f 7`" ]
     then
-    if [ $suma_monto_gravado -eq `head -n 1 "$1" | cut -d ';' -f 8` ]
+    echo NG ok
+    if [ "$suma_monto_gravado" = "`head -n 1 "$1" | cut -d ';' -f 8`" ]
     then
-    if [ $suma_monto_iva -eq `head -n 1 "$1" | cut -d ';' -f 9` ]
+    echo G OK
+    if [ "$suma_monto_iva" = "`head -n 1 "$1" | cut -d ';' -f 9`" ]
     then
+    echo I OK
     	local total=`echo "$suma_monto_iva + $suma_monto_no_gravado + $suma_monto_gravado" | bc -l`
-    	if [ $total -eq `head -n 1 "$1" | cut -d ';' -f 10` ]
+    	if [ "$total" = "`head -n 1 "$1" | cut -d ';' -f 10`" ]
     	then
     		echo _____________los montos concuerdan ___________
     		return 0 	# Los montos concuerdan con el encabezado
@@ -304,7 +306,8 @@ IFS='
     fi
     fi
     fi
-    IFS=$OFS    
+    IFS=$OFS   
+    echo "NG: $suma_monto_no_gravado G: $suma_monto_gravado I: $suma_monto_iva T: $total "
     return 2
 }
 
