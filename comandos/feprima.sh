@@ -189,7 +189,8 @@ validarCabecera(){
 #	$1: MontoIVAItem  $2: MontoItem  $3:TasaIVAItem          #
 ##################################################################
 monto_es_valido(){
-    MontoTemp= `echo "$2 * $3 / 100" | bc -l`
+    MontoTemp=`echo "$2 * $3 / 100" | bc -l`
+echo "Montotemp: $MontoTemp  pesos1: $1"
     if [ $MontoTemp -eq $1 ]
     then
 	 if [ `echo $1 | bc -l` < 0 ] -o [ `echo $2 | bc -l` < 0 ] -o [ `echo $3 | bc -l` < 0 ]
@@ -250,35 +251,38 @@ validarItems(){
     local suma_monto_gravado
     local suma_monto_no_gravado
     local suma_monto_iva
-    
-    lineas=`sed 1d "$1"`
-    for linea in $lineas
+    OIFS=$IFS
+IFS='
+'
+    for linea in `sed 1d "$1"`
     do
     	echo $linea
 		validarFormatoItems "$linea"
 		if [ $? -eq 1 ]
 		then
-			local DescItem = `echo $linea | cut -d ';' -f 1`
-			local MontoItem = `echo $linea | cut -d ';' -f 2`
-			local TasaIVAItem = `echo $linea | cut -d ';' -f 3`
-			local MontoIVAItem = `echo $linea | cut -d ';' -f 4`
+			local DescItem=`echo $linea | cut -d ';' -f 1`
+			local MontoItem=`echo $linea | cut -d ';' -f 2`
+			local TasaIVAItem=`echo $linea | cut -d ';' -f 3`
+			local MontoIVAItem=`echo $linea | cut -d ';' -f 4`
 			monto_es_valido $MontoIVAItem $MontoItem $TasaIVAItem
 			if [ $? -eq 1]
 			then
 			esta_gravado $TasaIVAItem
 			if [ $? -eq 1 ]
 			then
-				$suma_monto_gravado = `echo "$suma_monto_gravado + $MontoItem" | bc -l` 
+				$suma_monto_gravado= `echo "$suma_monto_gravado + $MontoItem" | bc -l` 
 			else
-				$suma_monto_no_gravado = `echo "$suma_monto_no_gravado + $MontoItem" | bc -l` 
+				$suma_monto_no_gravado= `echo "$suma_monto_no_gravado + $MontoItem" | bc -l` 
 			fi
-			$suma_monto_iva = `echo "$suma_monto_iva + $MontoIVAItem" | bc -l` 
+			$suma_monto_iva= `echo "$suma_monto_iva + $MontoIVAItem" | bc -l` 
 			else
 			echo ___monto invalido ____
+			IFS=$OFS
 			return 1
 			fi
 		else
 			echo .-.-.monto invalido -.-.
+			IFS=$OFS
 			return 1
 		fi
     done
@@ -299,7 +303,7 @@ validarItems(){
     fi
     fi
     fi
-    
+    IFS=$OFS    
     return 2
 }
 
