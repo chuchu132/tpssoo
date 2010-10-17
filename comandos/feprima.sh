@@ -102,18 +102,20 @@ validar_formato_cabecera(){
 #4 fechaFactura
 #5 fechaVencimientoCAE
 
+cabecera=`head -n 1 "$1"`
 OIFS=$IFS
 IFS=';'
-array=($1)
+array=($cabecera)
 cant_campos=${#array[@]}
+
 if [ $cant_campos -eq 10 ]
 then
 
-	if [ `echo ${array[1]} | grep "^[0-9]\{11\}$"` ] && [ `echo ${array[2]} | grep "^[ABCE]\{1\}$"` ] && [ `echo ${array[3]} | grep "^[0-9]\{3\}[0-8]$"` ] && [ `echo ${array[4]} | grep "^[0-9]\{7\}[0-8]$"` ]
+	if [ `echo ${array[0]} | grep "^[0-9]\{11\}$"` ] && [ `echo ${array[1]} | grep "^[ABCE]\{1\}$"` ] && [ `echo ${array[2]} | grep "^[0-9]\{3\}[0-8]$"` ] && [ `echo ${array[3]} | grep "^[0-9]\{7\}[0-8]$"` ]
 	then
-		if [ `fechaEsValida ${array[5]}` ] && [ `fechaEsValida ${array[6]}` ] 
+		if [ `fechaEsValida ${array[4]}` ] && [ `fechaEsValida ${array[5]}` ] 
 		then
-	        if [ `echo ${array[7]} | grep "^[0-9]*\.[0-9][0-9]$"` ] && [ `echo ${array[8]} | grep "^[0-9]*\.[0-9][0-9]$"` ] &&   [ `echo ${array[9]} | grep "^[0-9]*\.[0-9][0-9]$"` ] && [ `echo ${array[10]} | grep "^[0-9]*\.[0-9][0-9]$"` ]
+	        if [ `echo ${array[6]} | grep "^[0-9]*\.[0-9][0-9]$"` ] && [ `echo ${array[7]} | grep "^[0-9]*\.[0-9][0-9]$"` ] &&   [ `echo ${array[8]} | grep "^[0-9]*\.[0-9][0-9]$"` ] && [ `echo ${array[9]} | grep "^[0-9]*\.[0-9][0-9]$"` ]
 	        then
 				IFS=$OIFS       
 				echo ______________ VALIDAR FORMATO CABECEERA VALIDO _______________________
@@ -307,7 +309,7 @@ grabarRegistro(){
 #	$1: archivo a procesar		#
 #################################
 procesar(){
-    validarCabecera $1
+    validarCabecera "${RECIBIDOS}/$1"
     if [ -z $? ]
     then
 		local rdo=`validarItems $1`
