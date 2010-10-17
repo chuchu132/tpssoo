@@ -147,6 +147,13 @@ then
 	error=1
 else
 	chmod 555 "$grupo/prin/maepro.txt"
+	lineas=`grep "^[^;]*;[0-9]\{11\};[^;]*;[^;]*;[0-9]\{4\}-[0-1][0-9]-[0-3][0-9];[^;]*$" "$grupo/prin/maepro.txt" | wc -l`
+	total=`cat "$grupo/prin/maepro.txt" | wc -l`
+	if [ $lineas -ne $total ]
+	then
+		echo "El archivo Maestro de Proveedores no tiene formato válido" >> "$grupo/temp/instalacion.log"
+		error=1
+	fi
 fi
 
 if [ ! -f "$grupo/prin/presu.txt" ]
@@ -206,7 +213,10 @@ then
 
 	echo "Inicializacion de Ambiente Concluida"
 	echo "Demonio corriendo bajo el no.: $PID_FO"
-	cat "$grupo/temp/instalacion.log"
+	if [ -a "$grupo/temp/instalacion.log" ]
+	then
+		cat "$grupo/temp/instalacion.log"
+	fi
 	ambiente
 	glog.sh fepini INFO "Inicializacion de Ambiente Concluida"
 	glog.sh fepini INFO "Demonio corriendo bajo el no.: $PID_FO"

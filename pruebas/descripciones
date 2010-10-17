@@ -4,7 +4,6 @@ aoenfidpsuewnd			Nombre de archivo incorrecto. No son caracteres numericos
 12345678901				Nombre de archivo incorrecto. Numeros insuficientes
 01234567890123			El 3er campo excede el valor permitido.(es 9999 y no debe ser mayor a 9998)
 12345678901234			Esta mal calculado el ImporteGravado y el noGravado (a lo q dice habria q restarle 10 en ambos casos)
-22222222222222			Esta mal el separador de fecha. Es '/' y debe ser '-'
 23456789012345			Esta vencida
 34567890123456			Ok
 45678901234567			Ok
@@ -13,3 +12,9 @@ aoenfidpsuewnd			Nombre de archivo incorrecto. No son caracteres numericos
 78901234567890			Esta mal el separador decimal. Es una coma en lugar de pto. Y el separador de de campo de los registros de item son tab en lugar de ;
 89012345678901			Ok
 90123456789012			Tiene un caracter invalido en el 2do campo.
+
+11111111111111			El proveedor no esta en el archivo maestro de proveedores
+22222222222222			Esta mal el separador de fecha. Es '/' y debe ser '-'
+33333333333333			Ok. Año bisiesto
+
+

@@ -1,0 +1,19 @@
+Para ejecutar el programa de pago de facturas electronicas:
+
+
+1) abrir una consola en la carpeta "comandos"
+2) correr el script fepini con el comando: 
+	> . fepini
+3) para detener el demonio invocar a stopfe
+	> stopfe.sh
+4) para volver a procesar archivos simplemente ejecutar startfe
+	> startfe.sh
+
+
+
+Para cargar las pruebas:
+1) borrar los archivos de las carpetas temp, rechazados, aceptados, arribos y recibidos
+2) copiar los archivos de prueba a la carpeta aceptados
+3) ejecutar el programa de pago de facturas electronicas
+
+

@@ -34,7 +34,6 @@ days=0
 if [ $mm -eq 0 ] || [ $mm -gt 12 ]
 then
     IFS=$OFS
-    echo "ERROR MES! $mm"
     return 0 #invalida
 fi
  
@@ -56,16 +55,18 @@ esac
 
 if [ $mm -eq 2 ]
 then
-	if [ $((yy % 4)) -ne 0 ] && [ $((yy % 400)) -eq 0 ] && [ ! $((yy % 100)) -eq 0 ]
+	if [ $((yy % 4)) -eq 0 ]
 	then
-	   days=29
+		if [ $((yy % 100)) -ne 0 ] || [ $((yy % 400)) -eq 0 ]
+		then
+			days=29
+		fi
 	fi
 fi
 
 if [ $dd -eq 0 ] || [ $dd -gt $days ]
 then
 	IFS=$OFS
-	echo "ERROR DIAS!!!!!!!!! $dd"
 	return 0 #invalida
 fi
 
@@ -166,10 +167,9 @@ validarCabecera(){
 	then
 		#	verifico que el proveedor este en el registro maestro	#
 		local cuit_prov=`head -n 1 "$1" | cut -d ';' -f 1`
-		local resultado=`grep "^.*;${cuit_prov};.*;.*;.*;.*$" "$grupo/prin/maepro.txt"`
-		if [ $? -ne 0 ]
+		local resultado=`grep "^[^;]*;${cuit_prov};[^;]*;[^;]*;[^;]*;[^;]*$" "$grupo/prin/maepro.txt"`
+		if [ -z $resultado ]
 		then
-			echo No existe el proveedor con CUIT $cuit_prov en el archivo maestro de proveedores 
 			glog.sh feprima WARN "No existe el proveedor con CUIT $cuit_prov en el archivo maestro de proveedores"
 			return 1
 		fi
@@ -299,12 +299,10 @@ IFS='
 				fi
 				suma_monto_iva=`echo "$suma_monto_iva + $MontoItem * $TasaIVAItem / 100" | bc -l` 
 			else
-				echo ___monto invalido ____
 				IFS=$OFS
 				return 1
 			fi
 		else
-			echo .-.-.monto invalido -.-.
 			IFS=$OFS
 			return 1
 		fi
