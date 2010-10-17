@@ -75,10 +75,11 @@ return 1 #valida
 }
 
 esDuplicado(){
+	local f	
 	local aceptados=`ls "$ACEPTADOS"`
-	for file in $aceptados
+	for f in $aceptados
 	do
-		if [ "$file" = "$1" ]
+		if [ "$f" = "$1" ]
 		then
 		return 1
 		else
@@ -87,6 +88,30 @@ esDuplicado(){
 	done
 }
 
+
+ptoVentaValido(){
+if [ `echo $1 | grep "^[0-9]\{4\}$"` ]
+then 
+	if [ $1 = "0000" ] || [ $1 = "9999" ]
+	then 
+	return	0 #invalido
+	fi
+return 1
+fi
+return	0 #invalido
+} 
+
+comprobanteValido(){
+if [ `echo $1 | grep "^[0-9]\{8\}$"` ]
+then 
+	if [ $1 = "00000000" ] || [ $1 = "99999999" ]
+	then 
+	return	0 #invalido
+	fi
+return 1
+fi
+return	0 #invalido
+} 
 
 validar_formato_cabecera(){
 #0 CUITProveedor  11 Dígitos. Clave Única de Identificación Tributaria
@@ -104,8 +129,11 @@ cant_campos=${#array[@]}
 
 if [ $cant_campos -eq 10 ]
 then
-
-	if [ `echo ${array[0]} | grep "^[0-9]\{11\}$"` ] && [ `echo ${array[1]} | grep "^[ABCE]\{1\}$"` ] && [ `echo ${array[2]} | grep "^[0-9]\{3\}[0-8]$"` ] && [ `echo ${array[3]} | grep "^[0-9]\{7\}[0-8]$"` ]
+	ptoVentaValido ${array[2]}
+	puntoVenta=$?
+	comprobanteValido  ${array[3]}
+	comprobante=$?
+	if [ `echo ${array[0]} | grep "^[0-9]\{11\}$"` ] && [ `echo ${array[1]} | grep "^[ABCE]\{1\}$"` ] && [ $puntoVenta ] && [ $comprobante ]
 	then
 		fechaEsValida ${array[4]}
 		local r1=$?
@@ -233,6 +261,7 @@ validarFormatoItems(){
 	IFS=$OIFS
 	return $res;
 }
+
 
 #####################################
 #	Valida los items de la factura	#
@@ -399,12 +428,14 @@ procesarArchivos(){
 	
 	archivos=`ls "$RECIBIDOS"`
 	for file in $archivos
-	do
+	do	
+	if [ -f "${RECIBIDOS}/$file" ]
+	then		
 		echo " "
 		echo "Archivo a Procesar: $file"
 		glog.sh feprima INFO "Archivo a Procesar: $file"
-		repetido=`esDuplicado "$file"`
-		if [ $repetido ]
+		esDuplicado "$file"
+		if [ $? ]
 		then
 			echo "Factura Duplicada: $file"
 			Mover "${RECIBIDOS}/$file" "$RECHAZADOS" feprima.log
@@ -412,6 +443,7 @@ procesarArchivos(){
 		else
 			procesar $file
 		fi
+	fi
 	done
 	echo "Fin de Feprima"
 	glog.sh feprima INFO "Fin de Feprima"
