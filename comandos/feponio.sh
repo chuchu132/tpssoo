@@ -49,11 +49,10 @@ do
 			result=`echo $nombre | grep '^[0-9]\{14\}$'`
 			if [ $? -eq 0 ] 
 			then
-				echo "Moviendo archivo a recibidos..."
+				echo "Factura Recibida: ${nombre}"
 				Mover "$RUTAARRIBOS/${nombre}" "$RUTARECIBIDOS"
 			else
-				echo "Archivo con nombre incorrecto: ${nombre}"
-				echo "Moviendo archivo a rechazados..."
+				echo "Factura Rechazada. Archivo con nombre incorrecto: ${nombre}"
 				Mover "$RUTAARRIBOS/${nombre}" "$RUTARECHAZADOS"			
 			fi 				
 		done
@@ -71,7 +70,6 @@ do
 		# si el grep retorna un valor distinto de 0 quiere decir que no encontro ningun proceso con ese nombre
 		if [ $? -ne 0 ]
 		then
-			echo "Se ejecuta feprima.sh"
 			feprima.sh
 		else
 			echo "No se puede lanzar feprima.sh porque está en ejecución."

@@ -15,9 +15,9 @@
 
 
 fechaEsValida(){
-if [ ! `echo $1 | grep "^[0-9]\{4\}-[0-1][0-9]-[0-3][0-9]$"` ] 
-then	
-	echo LA FECHA NO TIENE EL FORMATO
+local rdo=`echo "$1" | grep "^[0-9]\{4\}-[0-1][0-9]-[0-3][0-9]$"`
+if [ -z $rdo ] 
+then
 	return 0 #invalida
 fi
 
@@ -31,10 +31,10 @@ yy=${arr[0]}
  
 days=0
  
-if [ $mm -le 0 -o $mm -gt 12 ];
+if [ $mm -eq 0 ] || [ $mm -gt 12 ]
 then
     IFS=$OFS
-    echo ERROR MES!
+    echo "ERROR MES! $mm"
     return 0 #invalida
 fi
  
@@ -54,7 +54,7 @@ case $mm in
     *)  days=-1 ;;
 esac
 
-if [ $mm -eq 2 ]; 
+if [ $mm -eq 2 ]
 then
 	if [ $((yy % 4)) -ne 0 ] && [ $((yy % 400)) -eq 0 ] && [ ! $((yy % 100)) -eq 0 ]
 	then
@@ -62,23 +62,17 @@ then
 	fi
 fi
 
-if [ $dd -le 0 ] || [ $dd -gt $days ]
+if [ $dd -eq 0 ] || [ $dd -gt $days ]
 then
 	IFS=$OFS
-	echo ERROR DIAS!!!!!!!!!
+	echo "ERROR DIAS!!!!!!!!! $dd"
 	return 0 #invalida
 fi
 
 IFS=$OFS
-echo VALIDA!
 return 1 #valida
 
 }
-
-
-
-
-
 
 esDuplicado(){
 	local aceptados=`ls "$ACEPTADOS"`
@@ -113,7 +107,11 @@ then
 
 	if [ `echo ${array[0]} | grep "^[0-9]\{11\}$"` ] && [ `echo ${array[1]} | grep "^[ABCE]\{1\}$"` ] && [ `echo ${array[2]} | grep "^[0-9]\{3\}[0-8]$"` ] && [ `echo ${array[3]} | grep "^[0-9]\{7\}[0-8]$"` ]
 	then
-		if [ `fechaEsValida ${array[4]}` ] && [ `fechaEsValida ${array[5]}` ] 
+		fechaEsValida ${array[4]}
+		local r1=$?
+		fechaEsValida ${array[5]}
+		local r2=$?
+		if [ $r1 -eq 1 ] && [ $r2 -eq 1 ]
 		then
 	        if [ `echo ${array[6]} | grep "^[0-9]*\.[0-9][0-9]$"` ] && [ `echo ${array[7]} | grep "^[0-9]*\.[0-9][0-9]$"` ] &&   [ `echo ${array[8]} | grep "^[0-9]*\.[0-9][0-9]$"` ] && [ `echo ${array[9]} | grep "^[0-9]*\.[0-9][0-9]$"` ]
 	        then
@@ -130,6 +128,9 @@ return 0; #invalido
 
 #################################
 #	$1: archivo a validar		#
+#	Return: 	0 <-> OK		#
+#				1 <-> erronea	#
+#				2 <-> vencida	#
 #################################
 validarCabecera(){
 
@@ -173,10 +174,8 @@ validarCabecera(){
 				fi
 			fi
 			fi
-		fi
-		echo "Factura Vencida: $1"
-		glog.sh feprima WARN "Factura Vencida: $1"
-		return 1
+		fi		
+		return 2 	#	factura vencida
 	fi
 	return 1
 				
@@ -187,22 +186,17 @@ validarCabecera(){
 #	$1: MontoIVAItem  $2: MontoItem  $3:TasaIVAItem          #
 ##################################################################
 monto_es_valido(){
-#    MontoTemp=`echo "$2 * $3 / 100" | bc -l | sed 's/^\([^.]*\...\).*/\1/g'`
 	MontoTemp=`echo "$2 * $3 / 100" | bc -l | awk '{printf ("%.2f",$MontoTemp)}'`
-echo "MontoTemp $MontoTemp"
-#echo "MontoTemp: $MontoTemp......deberia darme: $1"
+	echo $MontoTemp
    if [ $MontoTemp = $1 ]
     then
 	 if [ "$2" = "0.00" ]
 	 then
-	 				echo ______________ MONTO  ITEM es CERO _______________________
 	    return 0 #invalido
 	else
-					echo ______________ MONTO ES VALIDO _______________________
 	    return 1 #valido
 	fi
     else
-    				echo ______________ MONTO IVA ITEM INVALIDO _______________________
 	return 0 #invalido
     fi
 }
@@ -212,11 +206,9 @@ echo "MontoTemp $MontoTemp"
 esta_gravado(){
     if [ "$1" = "0.00" ]
     then
-		echo "NOOOO gravadoo"
-	return 0
+		return 0
 	else
-	echo esta gravadooooooooooooooooooooo
-	return 1
+		return 1
     fi
 } 
 
@@ -277,7 +269,6 @@ IFS='
 				else
 					suma_monto_no_gravado=`echo "$suma_monto_no_gravado + $MontoItem" | bc -l` 
 				fi
-#cambio esta linea porq sino tenemos problemas de redondeo
 				suma_monto_iva=`echo "$suma_monto_iva + $MontoItem * $TasaIVAItem / 100" | bc -l` 
 			else
 				echo ___monto invalido ____
@@ -316,26 +307,19 @@ IFS='
 
     if [ "$suma_monto_no_gravado" = "`head -n 1 "$1" | cut -d ';' -f 7`" ]
     then
-    echo NG ok
     if [ "$suma_monto_gravado" = "`head -n 1 "$1" | cut -d ';' -f 8`" ]
     then
-    echo G OK
     if [ "$suma_monto_iva" = "`head -n 1 "$1" | cut -d ';' -f 9`" ]
     then
-    echo I OK
 	total=`echo "$suma_monto_iva + $suma_monto_no_gravado + $suma_monto_gravado" | bc -l`
     	if [ "$total" = "`head -n 1 "$1" | cut -d ';' -f 10`" ]
     	then
-    		echo _____________los montos concuerdan ___________
     		return 0 	# Los montos concuerdan con el encabezado
-	else
-		echo "El total dio $total"
     	fi
     fi
     fi
     fi
     IFS=$OFS   
-    echo "NG: $suma_monto_no_gravado G: $suma_monto_gravado I: $suma_monto_iva T: $total "
     return 2
 }
 
@@ -362,34 +346,45 @@ grabarRegistro(){
 #################################
 procesar(){
     validarCabecera "${RECIBIDOS}/$1"
-    if [ $? -eq 0 ]
+    local rdo=$?
+    if [ $rdo -eq 0 ]
     then
 		validarItems "${RECIBIDOS}/$1"
-		local rdo=$?
+		rdo=$?
 		if [ $rdo -eq 0 ]
 		then
 			grabarRegistro "${RECIBIDOS}/$1"
 			Mover "${RECIBIDOS}/$file" "$ACEPTADOS" feprima.log
 	        glog.sh feprima INFO "Factura Aceptada: $file"
+	        echo "Factura Aceptada: $file"
+		else
+			if [ $rdo -eq 2 ]
+			then
+				echo "Factura Errónea, no coinciden los totales: $1"
+				glog.sh feprima ERROR "Factura Errónea no coinciden los totales: $1"
+				Mover "${RECIBIDOS}/$file" "$RECHAZADOS" feprima.log
+			fi
+			if [ $rdo -eq 1 ]
+			then
+				echo "Factura Errónea en registro item: $1"
+				glog.sh feprima ERROR "Factura Errónea en registro item: $1"
+				Mover "${RECIBIDOS}/$file" "$RECHAZADOS" feprima.log
+			fi
+		fi		
+    else
+		if [ $rdo -eq 1 ]
+		then
+			echo "Factura Errónea en registro cabecera: $1"
+			glog.sh feprima ERROR "Factura Errónea en registro cabecera: $1"
+			Mover "${RECIBIDOS}/$file" "$RECHAZADOS" feprima.log
 		fi
 		if [ $rdo -eq 2 ]
 		then
-			echo "Factura Errónea, no coinciden los totales: $1"
-			glog.sh feprima ERROR "Factura Errónea no coinciden los totales: $1"
+			echo "Factura Vencida: $1"
+			glog.sh feprima WARN "Factura Vencida: $1"
 			Mover "${RECIBIDOS}/$file" "$RECHAZADOS" feprima.log
 		fi
-		if [ $rdo -eq 1 ]
-		then
-			echo "Factura Errónea en registro item: $1"
-			glog.sh feprima ERROR "Factura Errónea en registro item: $1"
-			Mover "${RECIBIDOS}/$file" "$RECHAZADOS" feprima.log
-		fi
-		
-    else
-	    echo "Factura Errónea en registro cabecera: $1"
-	    glog.sh feprima ERROR "Factura Errónea en registro cabecera: $1"
-	    Mover "${RECIBIDOS}/$file" "$RECHAZADOS" feprima.log
-    fi
+	fi
 
 }
 
@@ -397,9 +392,9 @@ procesarArchivos(){
 
 	cant_arch=`ls -l "$RECIBIDOS" | wc -l`
 	cant_arch=`echo "$cant_arch - 1" | bc -l`
-	echo "==================================="
+	echo "==================================================================="
+	glog.sh feprima INFO "=============================================================="
 	echo "Inicio de Feprima: $cant_arch"
-	glog.sh feprima INFO "=============================="
 	glog.sh feprima INFO "Inicio de Feprima: $cant_arch" 
 	
 	archivos=`ls "$RECIBIDOS"`
@@ -419,9 +414,9 @@ procesarArchivos(){
 		fi
 	done
 	echo "Fin de Feprima"
-	echo "==================================="
 	glog.sh feprima INFO "Fin de Feprima"
-	glog.sh feprima INFO "=============================="
+	echo "==================================================================="
+	glog.sh feprima INFO "=============================================================="
 }
 
 #########################

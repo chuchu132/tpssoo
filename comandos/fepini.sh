@@ -32,7 +32,7 @@ bloquear(){
                 return 1
         fi
         
-        local comando=`basename $1`
+        local comando=`basename "$1"`
         if [ -a "$grupo/temp/.running_$comando.lck" ]
         then
                 p_id=`grep "^PID=" "$grupo/temp/.running_$comando.lck"`
@@ -56,7 +56,7 @@ desbloquear(){
                 return 1
         fi
         
-        local comando=`basename $1`
+        local comando=`basename "$1"`
         rm -f "$grupo/temp/.running_$comando.lck" > /dev/null
         return $?
 }
@@ -174,7 +174,7 @@ done
 
 #	Verificar Comandos independientes	#
 
-for cmd in fepago.pl feplist startfe.sh stopfe.sh
+for cmd in fepago.pl feplist.pl startfe.sh stopfe.sh
 do
 	if [ ! -e "$grupo/comandos/$cmd" ]
 	then
