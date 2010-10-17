@@ -193,7 +193,7 @@ monto_es_valido(){
 echo "Montotemp: $MontoTemp  pesos1: $1"
     if [ $MontoTemp = $1 ]
     then
-	 if [ "$1" "<" "0" ] -o [ "$2" "<" "0" ] -o [  "$3" "<" "0" ]
+	 if [ "$1" "<" "0" ] || [ "$2" "<" "0" ] || [  "$3" "<" "0" ]
 	 then
 	 				echo ______________ MONTO  INVALIDO _______________________
 	    return 0 #invalido
