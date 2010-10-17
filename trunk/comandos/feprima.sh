@@ -296,14 +296,17 @@ IFS='
 
 	echo "suma_monto_no_gravado: $suma_monto_no_gravado y lo otro `head -n 1 "$1" | cut -d ';' -f 7`"
 	echo "suma_monto_gravado: $suma_monto_gravado y lo otro `head -n 1 "$1" | cut -d ';' -f 8`"
-	echo "suma_monto_no_gravado: $suma_monto_no_gravado y lo otro `head -n 1 "$1" | cut -d ';' -f 9`"
-	suma_monto_iva=`echo "$suma_monto_iva" | bc -l | awk '{printf ("%.2f",$suma_monto_iva)}'`
-	echo "suma_monto_iva: $suma_monto_iva"
-
+	suma_monto_iva=`echo "$suma_monto_iva" | bc -l | awk '{printf ("%.2f",$suma_monto_iva)}'`	
+	echo "suma_monto_no_gravado: $suma_monto_iva y lo otro `head -n 1 "$1" | cut -d ';' -f 9`"
+	
 #esto es para q coincida con el formato del archivo, sino me tira q no son iguales
 	if [ "$suma_monto_no_gravado" = "0" ] 
 	then
 		suma_monto_no_gravado="0.00"
+	fi
+	if [ "$suma_monto_gravado" = "0" ] 
+	then
+		suma_monto_gravado="0.00"
 	fi
 
 

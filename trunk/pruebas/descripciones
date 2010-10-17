@@ -7,3 +7,4 @@ Archivos			Nota
 56789012345678			Tiene valores negativos (3 numeros neg)
 67890123456789			Fecha invalida. Dice: 2010-02-30
 78901234567890			Esta mal el separador decimal. Es una coma en lugar de pto. Y el separador de de campo de los registros de item son tab en lugar de ;
+89012345678901			Ok
