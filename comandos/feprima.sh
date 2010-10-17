@@ -306,10 +306,15 @@ IFS='
 		suma_monto_no_gravado="0.00"
 	fi
 
-    if [ "$suma_monto_no_gravado" = "`head -n 1 "$1" | cut -d ';' -f 8`" ]
+
+		echo "ALE NG: `head -n 1 "$1" | cut -d ';' -f 7` "
+		echo "ALE G: `head -n 1 "$1" | cut -d ';' -f 8` "
+		echo "ALE I: `head -n 1 "$1" | cut -d ';' -f 9` "
+
+    if [ "$suma_monto_no_gravado" = "`head -n 1 "$1" | cut -d ';' -f 7`" ]
     then
     echo NG ok
-    if [ "$suma_monto_gravado" = "`head -n 1 "$1" | cut -d ';' -f 7`" ]
+    if [ "$suma_monto_gravado" = "`head -n 1 "$1" | cut -d ';' -f 8`" ]
     then
     echo G OK
     if [ "$suma_monto_iva" = "`head -n 1 "$1" | cut -d ';' -f 9`" ]
