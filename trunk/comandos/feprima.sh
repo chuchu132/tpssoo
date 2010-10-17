@@ -188,7 +188,8 @@ validarCabecera(){
 ##################################################################
 monto_es_valido(){
 #    MontoTemp=`echo "$2 * $3 / 100" | bc -l | sed 's/^\([^.]*\...\).*/\1/g'`
-	MontoTemp=`echo "$2 * $3 / 100" | bc -l  | awk '{printf ("%.2f", $1)}'`
+	MontoTemp=`echo "$2 * $3 / 100" | bc -l | awk '{printf ("%.2f",$MontoTemp)}'`
+echo "MontoTemp $MontoTemp"
 #echo "MontoTemp: $MontoTemp......deberia darme: $1"
    if [ $MontoTemp = $1 ]
     then
@@ -264,6 +265,9 @@ IFS='
 			local MontoItem=`echo $linea | cut -d ';' -f 2`
 			local TasaIVAItem=`echo $linea | cut -d ';' -f 3`
 			local MontoIVAItem=`echo $linea | cut -d ';' -f 4`
+			echo "MontoItem: $MontoItem"
+			echo "TasaIVAItem: $TasaIVAItem"
+			echo "MontoIVAItem: $MontoIVAItem"
 			monto_es_valido $MontoIVAItem $MontoItem $TasaIVAItem
 			if [ $? -eq 1 ]
 			then
