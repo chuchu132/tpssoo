@@ -277,7 +277,8 @@ IFS='
 				else
 					suma_monto_no_gravado=`echo "$suma_monto_no_gravado + $MontoItem" | bc -l` 
 				fi
-				suma_monto_iva=`echo "$suma_monto_iva + $MontoIVAItem" | bc -l` 
+#cambio esta linea porq sino tenemos problemas de redondeo
+				suma_monto_iva=`echo "$suma_monto_iva + $MontoItem * $TasaIVAItem / 100" | bc -l` 
 			else
 				echo ___monto invalido ____
 				IFS=$OFS
@@ -293,7 +294,18 @@ IFS='
     #	comparar los valores de los acumuladores con los del encabezado
 	echo "Comparacion con el encabezado"
 
-echo "suma_monto_no_gravado: $suma_monto_no_gravado y lo otro `head -n 1 "$1" | cut -d ';' -f 7`"
+	echo "suma_monto_no_gravado: $suma_monto_no_gravado y lo otro `head -n 1 "$1" | cut -d ';' -f 8`"
+	echo "suma_monto_gravado: $suma_monto_gravado y lo otro `head -n 1 "$1" | cut -d ';' -f 7`"
+	echo "suma_monto_no_gravado: $suma_monto_no_gravado y lo otro `head -n 1 "$1" | cut -d ';' -f 9`"
+	suma_monto_iva=`echo "$suma_monto_iva" | bc -l | awk '{printf ("%.2f",$suma_monto_iva)}'`
+	echo "suma_monto_iva: $suma_monto_iva"
+
+#esto es para q coincida con el formato del archivo, sino me tira q no son iguales
+	if [ "$suma_monto_no_gravado" = "0" ] 
+	then
+		suma_monto_no_gravado="0.00"
+	fi
+
     if [ "$suma_monto_no_gravado" = "`head -n 1 "$1" | cut -d ';' -f 8`" ]
     then
     echo NG ok
@@ -405,7 +417,7 @@ procesarArchivos(){
 }
 
 #########################
-# feprima				#
+# feprima				#`echo "$2 * $3 / 100" | bc -l | awk '{printf ("%.2f",$MontoTemp)}'`
 #########################
 if [ -z $INI_FEPINI ]
 then
