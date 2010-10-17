@@ -190,7 +190,6 @@ validarCabecera(){
 ##################################################################
 monto_es_valido(){
     MontoTemp=`echo "$2 * $3 / 100" | bc -l | sed 's/^\([^.]*\...\).*/\1/g'`
-echo "Montotemp: $MontoTemp  pesos1: $1"
     if [ $MontoTemp = $1 ]
     then
 	 if [ "$1" "<" "0" ] || [ "$2" "<" "0" ] || [  "$3" "<" "0" ]
