@@ -193,24 +193,24 @@ monto_es_valido(){
 echo "Montotemp: $MontoTemp  pesos1: $1"
     if [ $MontoTemp = $1 ]
     then
-	 if [ `echo $1 | bc -l` < 0 ] -o [ `echo $2 | bc -l` < 0 ] -o [ `echo $3 | bc -l` < 0 ]
+	 if [ `echo $1 | bc -l` -lt 0 ] -o [ `echo $2 | bc -l` -lt 0 ] -o [ `echo $3 | bc -l` -lt 0 ]
 	 then
 	 				echo ______________ MONTO  INVALIDO _______________________
-	    return 0; #invalido
+	    return 0 #invalido
 	else
 					echo ______________ MONTO ES VALIDO _______________________
-	    return 1; #valido
+	    return 1 #valido
 	fi
     else
     				echo ______________ MONTO INVALIDO _______________________
-	return 0; #invalido
+	return 0 #invalido
     fi
 }
 #############################
 #   $1: %iva                #
 #############################
 esta_gravado(){
-    if [ $1 -eq "0.00" ]
+    if [ $1 = "0.00" ]
     then
 	return 1; #true
     else
@@ -270,11 +270,11 @@ IFS='
 			esta_gravado $TasaIVAItem
 			if [ $? -eq 1 ]
 			then
-				$suma_monto_gravado= `echo "$suma_monto_gravado + $MontoItem" | bc -l` 
+				suma_monto_gravado=`echo "$suma_monto_gravado + $MontoItem" | bc -l` 
 			else
-				$suma_monto_no_gravado= `echo "$suma_monto_no_gravado + $MontoItem" | bc -l` 
+				suma_monto_no_gravado=`echo "$suma_monto_no_gravado + $MontoItem" | bc -l` 
 			fi
-			$suma_monto_iva= `echo "$suma_monto_iva + $MontoIVAItem" | bc -l` 
+			suma_monto_iva=`echo "$suma_monto_iva + $MontoIVAItem" | bc -l` 
 			else
 			echo ___monto invalido ____
 			IFS=$OFS
