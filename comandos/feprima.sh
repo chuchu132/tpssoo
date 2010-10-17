@@ -82,10 +82,9 @@ esDuplicado(){
 		if [ "$f" = "$1" ]
 		then
 		return 1
-		else
-		return 0
 		fi
 	done
+	return 0
 }
 
 
@@ -133,7 +132,7 @@ then
 	puntoVenta=$?
 	comprobanteValido  ${array[3]}
 	comprobante=$?
-	if [ `echo ${array[0]} | grep "^[0-9]\{11\}$"` ] && [ `echo ${array[1]} | grep "^[ABCE]\{1\}$"` ] && [ $puntoVenta ] && [ $comprobante ]
+	if [ `echo ${array[0]} | grep "^[0-9]\{11\}$"` ] && [ `echo ${array[1]} | grep "^[ABCE]\{1\}$"` ] && [ $puntoVenta  -eq 1 ] && [ $comprobante  -eq 1 ]
 	then
 		fechaEsValida ${array[4]}
 		local r1=$?
@@ -435,7 +434,7 @@ procesarArchivos(){
 		echo "Archivo a Procesar: $file"
 		glog.sh feprima INFO "Archivo a Procesar: $file"
 		esDuplicado "$file"
-		if [ $? ]
+		if [ $? -eq 1 ]
 		then
 			echo "Factura Duplicada: $file"
 			Mover "${RECIBIDOS}/$file" "$RECHAZADOS" feprima.log
