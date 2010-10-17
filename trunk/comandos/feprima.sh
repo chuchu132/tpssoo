@@ -212,7 +212,7 @@ echo "MontoTemp $MontoTemp"
 esta_gravado(){
     if [ "$1" = "0.00" ]
     then
-	echo "esta_gravado Entro a q es 0"
+		echo "NOOOO gravadoo"
 	return 0
 	else
 	echo esta gravadooooooooooooooooooooo
@@ -294,8 +294,8 @@ IFS='
     #	comparar los valores de los acumuladores con los del encabezado
 	echo "Comparacion con el encabezado"
 
-	echo "suma_monto_no_gravado: $suma_monto_no_gravado y lo otro `head -n 1 "$1" | cut -d ';' -f 8`"
-	echo "suma_monto_gravado: $suma_monto_gravado y lo otro `head -n 1 "$1" | cut -d ';' -f 7`"
+	echo "suma_monto_no_gravado: $suma_monto_no_gravado y lo otro `head -n 1 "$1" | cut -d ';' -f 7`"
+	echo "suma_monto_gravado: $suma_monto_gravado y lo otro `head -n 1 "$1" | cut -d ';' -f 8`"
 	echo "suma_monto_no_gravado: $suma_monto_no_gravado y lo otro `head -n 1 "$1" | cut -d ';' -f 9`"
 	suma_monto_iva=`echo "$suma_monto_iva" | bc -l | awk '{printf ("%.2f",$suma_monto_iva)}'`
 	echo "suma_monto_iva: $suma_monto_iva"
