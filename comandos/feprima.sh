@@ -230,10 +230,10 @@ validarFormatoItems(){
 	res=0
 	if [ $cant_campos -eq 4 ]
 	then
-		if [ `echo ${array[1]} | grep "^[0-9]*\.[0-9][0-9]$"` ] && [ `echo ${array[2]} | grep "^[0-9]*\.[0-9][0-9]$"` ] &&   [ `echo ${array[3]} | grep "^[0-9]*\.[0-9][0-9]$"` ]
+		if [ `echo ${array[1]} | grep "^[0-9]*\.[0-9][0-9]$"` ] && [ `echo ${array[2]} | grep "^[0-9]*\.[0-9][0-9]$"` ] && [ `echo ${array[3]} | grep "^[0-9]*\.[0-9][0-9]$"` ]
 		then
-			$res=1
-		 fi	
+			res=0
+		fi	
 	fi
 	IFS=$OIFS
 	return $res;
@@ -252,8 +252,9 @@ validarItems(){
     local suma_monto_iva
     
     lineas=`sed 1d "$1"`
-    for linea in lineas
+    for linea in $lineas
     do
+    	echo $linea
 		validarFormatoItems "$linea"
 		if [ $? -eq 1 ]
 		then
@@ -261,9 +262,11 @@ validarItems(){
 			local MontoItem = `echo $linea | cut -d ';' -f 2`
 			local TasaIVAItem = `echo $linea | cut -d ';' -f 3`
 			local MontoIVAItem = `echo $linea | cut -d ';' -f 4`
-			if [ `monto_es_valido $MontoIVAItem $MontoItem $TasaIVAItem` -eq 1]
+			monto_es_valido $MontoIVAItem $MontoItem $TasaIVAItem
+			if [ $? -eq 1]
 			then
-			if [ `esta_gravado $TasaIVAItem` -eq 1 ]
+			esta_gravado $TasaIVAItem
+			if [ $? -eq 1 ]
 			then
 				$suma_monto_gravado = `echo "$suma_monto_gravado + $MontoItem" | bc -l` 
 			else
@@ -271,9 +274,11 @@ validarItems(){
 			fi
 			$suma_monto_iva = `echo "$suma_monto_iva + $MontoIVAItem" | bc -l` 
 			else
+			echo ___monto invalido ____
 			return 1
 			fi
 		else
+			echo .-.-.monto invalido -.-.
 			return 1
 		fi
     done
@@ -364,6 +369,7 @@ procesarArchivos(){
 	archivos=`ls "$RECIBIDOS"`
 	for file in $archivos
 	do
+		echo " "
 		echo "Archivo a Procesar: $file"
 		glog.sh feprima INFO "Archivo a Procesar: $file"
 		repetido=`esDuplicado "$file"`
