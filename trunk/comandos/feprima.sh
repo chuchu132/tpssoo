@@ -53,7 +53,7 @@ case $mm in
    12) days=31 ;;
     *)  days=-1 ;;
 esac
- 
+ echo "dias:$days(sin espacios)"
 if [ $mm -eq 2 ]; 
 then
 	if [ $((yy % 4)) -ne 0 ] && [ $((yy % 400)) -eq 0 ] && [ ! $((yy % 100)) -eq 0 ]
