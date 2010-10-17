@@ -214,7 +214,6 @@ validarCabecera(){
 ##################################################################
 monto_es_valido(){
 	MontoTemp=`echo "$2 * $3 / 100" | bc -l | awk '{printf ("%.2f",$MontoTemp)}'`
-	echo $MontoTemp
    if [ $MontoTemp = $1 ]
     then
 	 if [ "$2" = "0.00" ]
@@ -308,13 +307,7 @@ IFS='
 		fi
     done
     
-    #	comparar los valores de los acumuladores con los del encabezado
-	echo "Comparacion con el encabezado"
-
-	echo "suma_monto_no_gravado: $suma_monto_no_gravado y lo otro `head -n 1 "$1" | cut -d ';' -f 7`"
-	echo "suma_monto_gravado: $suma_monto_gravado y lo otro `head -n 1 "$1" | cut -d ';' -f 8`"
 	suma_monto_iva=`echo "$suma_monto_iva" | bc -l | awk '{printf ("%.2f",$suma_monto_iva)}'`	
-	echo "suma_monto_no_gravado: $suma_monto_iva y lo otro `head -n 1 "$1" | cut -d ';' -f 9`"
 	
 #esto es para q coincida con el formato del archivo, sino me tira q no son iguales
 	if [ "$suma_monto_no_gravado" = "0" ] 
@@ -325,11 +318,6 @@ IFS='
 	then
 		suma_monto_gravado="0.00"
 	fi
-
-
-		echo "ALE NG: `head -n 1 "$1" | cut -d ';' -f 7` "
-		echo "ALE G: `head -n 1 "$1" | cut -d ';' -f 8` "
-		echo "ALE I: `head -n 1 "$1" | cut -d ';' -f 9` "
 
     if [ "$suma_monto_no_gravado" = "`head -n 1 "$1" | cut -d ';' -f 7`" ]
     then
@@ -449,7 +437,7 @@ procesarArchivos(){
 }
 
 #########################
-# feprima				#`echo "$2 * $3 / 100" | bc -l | awk '{printf ("%.2f",$MontoTemp)}'`
+# feprima				
 #########################
 if [ -z $INI_FEPINI ]
 then
