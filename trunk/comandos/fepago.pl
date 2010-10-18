@@ -302,7 +302,7 @@ sub validarMonto(){
 	    system(@args2);
 		exit 1;
 	}
-	if ($monto=~ /^[0-9]*\.[0-9][0-9]/){
+	if ($monto=~ /^[0-9]*\.[0-9][0-9]$/){
 		return;
 	}
 
