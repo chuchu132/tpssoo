@@ -1,19 +1,33 @@
-#! /usr/bin/perl
+#!/usr/bin/perl
 
 $TRUE = 1;
 $FALSE = 0;
 
-/* Clave: FUENTE => Valor: monto disponible */
+#Clave: FUENTE => Valor: monto disponible
 %fuentes;
-/*Cada elemento es un registro completo APAGAR */
+#Cada elemento es un registro completo APAGAR
 @comprometidos;
-/* Clave: CAE => Valor: TRUE|FALSE */
+#Clave: CAE => Valor: TRUE|FALSE
 %disponibilidad;
+#Parametros ingresados por el usuario
+$cadena;
+$modobarr;
+$modoejec;
+$fechadesde;
+$fechahasta;
+$montodesde;
+$montohasta;
+$fechalimite = "2050-12-31";
+#$entrada = "/facturas/apagar.txt";
+$entrada = "apagar.txt";
+#$presupuesto = "/prin/presu.txt";
+$presupuesto = "presu.txt";
 
 
 ##################################
 # Verifica que no haya otro fepago corriendo	#
 #########################
+
 sub estaCorriendoFepago{
 	$x=`ps | grep '^.*fepago\.sh\$'`;
 	if ( $x ){
@@ -28,7 +42,8 @@ sub estaCorriendoFepago{
 ##################################
 # Verifica que no haya otro feprima corriendo	#
 #########################
-sub estaCorriendoFrima{
+
+sub estaCorriendoFeprima{
 	$x=`ps | grep '^.*feprima\.sh\$'`;
 	if ( $x ){
 		print 'Error: feprima ya se está ejecutando'."\n";
@@ -42,12 +57,15 @@ sub estaCorriendoFrima{
 #########################
 # Verifica si esta  inicializado el ambiente	#
 #########################
+
 sub initAmbiente{
 	if ( -z $INI_FEPINI )
 	{
 		print 'No se ha inicializado el ambiente. Debe ejecutarse el comando fepini.sh previamente'. "\n";
 		$text="No se ha inicializado el ambiente";
-		system("./glog.sh fepago SERROR $text");
+		chop($text);
+	      	@args = ('glog.sh',"fepago","SERROR","$text");
+		system(@args);
 		exit 1;
 	}
 	else{
@@ -56,45 +74,78 @@ sub initAmbiente{
 }
 
 ####################################
-# Iniciliza %fuentes
+# Inicializa %fuentes
 ####################################
-sub leer_presupuesto{
 
-my($FD,$linea,@campos);
+sub leerPresupuesto{
 
-open(FD,"<$PRESUPUESTO");
-while($linea = <FD>){
+    my($FD,$linea,@campos);
+
+    open(FD,"<$presupuesto");
+    while($linea = <FD>){
+	chomp($linea);
+	#Cargo el hash %fuentes
+	@campos=split(";",$linea);
+	$fuentes{$campos[0]}= $campos[1];
+
+	#print "$campos[0], $campos[1]\n";
+  }
+
+  close(FD);
+}
+
+####################################
+# Muestra %fuentes
+####################################
+
+sub mostrarPresupuesto{
+
+    my($FD,$linea,@campos);
+
+    open(FD,"<$presupuesto");
+    while($linea = <FD>){
 	chomp($linea);
 	@campos=split(";",$linea);
-	$fuentes{$campos[0]}= $campos[1];	
+	print	$campos[0]." - ".$campos[1]." - ".$fuentes{$campos[0]}."\n";
+    }
+    close(FD);
 }
 
-close(FD);
+sub mostrarPresupuestoMem{
 
+    @claves = keys(%fuentes);
+    @valores = values(%fuentes);
+
+    $cantValores = @claves;
+    $x = 0;  
+
+    while ($x <= $cantValores){
+      print "$claves[$x] - $valores[$x]\n";
+      $x++;
+    }
 }
-
 
 ########################################################################
 # Determina una fuente, segun el monto pasado
 ########################################################################
 
-sub get_fuente{
+sub getFuente{
 
-my($monto,$fuente);
+    my($monto,$fuente);
 
-$monto = $_[0];
-if( $monto < 1000){
+    $monto = $_[0];
+    if( $monto < 1000){
 	$fuente="11";
-} elsif ( $monto >= 1000 && $monto<10000 ){
-	$fuente="12";
-} elsif ( $monto >= 1000 && $monto<10000 ){
-	$fuente="13";
-} elsif ( $monto >= 10000 && $monto<150000 ){
-	$fuente="14";
-} elsif ( $monto >= 150000 ){
-	$fuente="15";
-}
-return ($fuente);
+    } elsif ( $monto >= 1000 && $monto<10000 ){
+	  $fuente="12";
+      } elsif ( $monto >= 1000 && $monto<10000 ){
+	    $fuente="13";
+	} elsif ( $monto >= 10000 && $monto<150000 ){
+	      $fuente="14";
+	  } elsif ( $monto >= 150000 ){
+		$fuente="15";
+	    }
+     return ($fuente);
 }
 
 ####################################
@@ -102,17 +153,19 @@ return ($fuente);
 # en la fuente para cubrir el monto a pagar.
 ####################################
 
-sub check_disponibilidad{
+sub checkDisponibilidad{
 
-my($monto,$fuente);
+    my($monto,$fuente);
 
-$monto = $_[0];
-$fuente= &get_fuente($monto);
-if($fuentes{$fuente} >= $monto  ){
+    #print "Verificando disponibilidad\n";
+    $monto = $_[0];
+    $fuente= &getFuente($monto);
+    if($fuentes{$fuente} >= $monto){
+	#print "Hay disponibilidad\n";
 	return ($TRUE);
-}
-
-return ($FALSE);
+    }
+    #print "No hay disponibilidad\n";
+    return ($FALSE);
 
 }
 
@@ -120,65 +173,290 @@ return ($FALSE);
 # Actualiza el monto disponible en una fuente. (En memoria, no en el archivo)
 ####################################
 
-sub actualizar_disponibilidad{
+sub actualizarDisponibilidad{
 
-my($monto,$fuente);
+    my($monto,$fuente);
 
-$monto = $_[0];
-$fuente= &get_fuente($monto);
-$fuentes{$fuente} -= $monto;
+    $monto = $_[0];
+    $fuente= &getFuente($monto);
+    $fuentes{$fuente} -= $monto;
 
+    return 0;
 }
 
 
-sub mostrar_registros_comprometidos{
+sub mostrarRegistrosComprometidos{
 
-my($registro,@campos);
+    my($registro,@campos);
 
-	foreach $registro (comprometidos) {
-		@campos=split(";",$registro);
-		if($disponibilidad{$campos[1]} == $TRUE ){
-			print $campos[0]."-".$campos[2]."-".$campos[3]."-LIBERADA\n";
-		}else{
-			print $campos[0]."-".$campos[2]."-".$campos[3]."-A PAGAR\n";
-		}
+    foreach $registro (@comprometidos) {
+	@campos = split(";",$registro);
+
+	print $campos[0]." - ".$campos[2]." - ".$campos[3]." - ".$campos[1]."\n";
+    }
+    return 0;
+}
+
+#################################
+#	Persistencia para Modo Actualizar
+#################################
+
+sub backupArchivo{
+       my(@num,@rutas,$ultima_version,$cmd,$archivo);
+       @num=`ls $_[1] | sed \'s/.*\\.\\(.*\\)\$/\\1/g\' | sort -n`;
+       $ultima_version= $num[-1];
+       $ultima_version++;
+       @rutas=split('/',$_[0]);
+       $archivo= $rutas[-1];
+       $cmd = "cp $_[0] $_[1]/$archivo\.$ultima_version";
+       system($cmd);
+}
+
+sub crearApagarNew{
+}
+
+sub crearPresuNew{
+}
+
+sub guardarApagarOld{
+}
+
+sub guardarPresuOld{
+}
+
+#################################
+#	Pide parametros al usuario y los carga en variables globales	
+#################################
+sub pedirParametros{
+
+	print "Ingrese parametros o -q para terminar el proceso\n";
+
+	$cadena = <STDIN>;
+	@param = split (" ", $cadena);
+
+	$cant = @param;
+	#print "Cantidad de parámetros= $cant\n";
+
+	#Validacion  
+	if (($param[0] eq "-ms") or ($param[0] eq "-ma") or ($param[0] eq "-q")){
+	  $modoejec = $param[0];
+	}
+	else {
+	  print "Debe ingresar un modo de ejecución (-ms,-ma o -q para terminar)\n";
+	  #exit 0;
+	} 
+
+	if (($param[1] eq "-bf") or ($param[1] eq "-bi") or ($param[1] eq "-bfi")){
+	  $modobarr = $param[1];
+	  if ($modobarr eq "-bf"){
+	    #tomo 2 parametros
+	    $fechadesde = $param[2];
+	    $fechahasta = $param[3];
+	  }
+	  if ($modobarr eq "-bi"){
+	    #tomo 2 parametros
+	    $montodesde = $param[2];
+	    $montohasta = $param[3];
+	  }
+	  if ($modobarr eq "-bfi"){
+	    #tomo 3 parametros
+	    $fechadesde = $param[2];
+	    $montodesde = $param[3];
+	    $montohasta = $param[4];
+	  }
+	}
+	else {
+	  print "Debe ingresar un modo de barrido (-bf,-bi o -bfi)\n";
+	  #exit 0;
+	}
+    
+	return 0;
+}
+
+#################################
+#	Inicializa el log	
+#################################
+
+sub inicializarLog{
+
+	$textIni="Inicio de fepago $cadena";
+	chop($textIni);
+	@args = ('glog.sh',"fepago","INFO","$textIni");
+      	system(@args);
+      return $result;
+}
+
+#################################
+#	Comparacion  de Fechas	
+#################################
+
+sub fechaEsMayor{
+    
+    my($fecha, @arregloFecha, @arregloFechaMenor);
+
+    $fecha = $_[0];
+    @arregloFecha = split ("-", $fecha);
+    @arregloFechaMenor = split("-", $fechadesde);
+
+    if ($arregloFecha[0] > $arregloFechaMenor[0]){	#comparo años
+      return ($TRUE);
+    } elsif ($arregloFecha[0] < $arregloFechaMenor[0]){
+	return ($FALSE);
+      } elsif ($arregloFecha[0] = $arregloFechaMenor[0]){
+	  if ($arregloFecha[1] > $arregloFechaMenor[1]){	#comparo meses
+	    return ($TRUE);
+	  } elsif ($arregloFecha[1] < $arregloFechaMenor[1]){
+	      return ($FALSE);
+	    } elsif ($arregloFecha[1] = $arregloFechaMenor[1]){
+		if ($arregloFecha[2] > $arregloFechaMenor[2]){  	#comparo dias
+		  return ($TRUE)
+		} elsif ($arregloFecha[2] < $arregloFechaMenor[2]){
+		    return ($FALSE);
+		  } elsif ($arregloFecha[2] = $arregloFechaMenor[2]){
+		      return ($TRUE);
+		    }
+	      }
 	}
 }
 
+sub fechaEsMenor{
+    
+    my($fecha, @arregloFecha, @arregloFechaMayor);
 
-sub mostrar_presupuesto{
-my($FD,$linea,@campos);
+    $fecha = $_[0];
+    @arregloFecha = split ("-", $fecha);
+    @arregloFechaMayor = split("-", $fechahasta);
 
-open(FD,"<$PRESUPUESTO");
-while($linea = <FD>){
-	chomp($linea);
-	@campos=split(";",$linea);
-	print	$campos[0]."-".$campos[1]."-".$fuentes{$campos[0]}."\n";
+    if ($arregloFecha[0] < @arregloFechaMayor[0]){	#comparo años
+      return ($TRUE);
+    } elsif ($arregloFecha[0] > @arregloFechaMayor[0]){
+	return ($FALSE);
+      } elsif ($arregloFecha[0] = @arregloFechaMayor[0]){
+	  if ($arregloFecha[1] < @arregloFechaMayor[1]){	#comparo meses
+	    return ($TRUE);
+	  } elsif ($arregloFecha[1] > @arregloFechaMayor[1]){
+	      return ($FALSE);
+	    } elsif ($arregloFecha[1] = @arregloFechaMayor[1]){
+		if ($arregloFecha[2] < @arregloFechaMayor[2]){  	#comparo dias
+		  return ($TRUE)
+		} elsif ($arregloFecha[2] > @arregloFechaMayor[2]){
+		    return ($FALSE);
+		  } elsif ($arregloFecha[2] = @arregloFechaMayor[2]){
+		      return ($TRUE);
+		    }
+	      }
+	}
 }
 
-close(FD);
+#################################
+#	Determinimar los registros comprometidos	
+#################################
 
+sub determinarComprometidos{
+
+      #Abrir archivo Facturas a Pagar
+      open ( ENT, "<$entrada" ) or die "No se pudo abrir el archivo $entrada : $!";
+      while ( $registro = <ENT> ){
+	
+	#print $registro;
+	#34567890123456;A PAGAR;2009-12-10;727.92
+	#45678901234567;A PAGAR;2010-04-01;1053.67
+	chomp($registro);
+	@apagar = split(';',$registro);
+	$montoapagar = $apagar[3];
+	$fechaapagar = $apagar[2];
+
+	printf "modo barrido = $modobarr\n";
+
+	if ( $modobarr eq "-bi" ){
+	  if ( ($montoapagar > $montodesde) && ($montoapagar < $montohasta ) ){
+	      #Esta en el rango pedido, me fijo si esta comprometido
+	      if ( $apagar[1] eq "A PAGAR" ){
+		if (&checkDisponibilidad($apagar[3])){ #Hay disponibilidad
+		  #print "registro comprometido\n";
+		  #Tengo que setear como LIBERADA
+		  $apagar[1] = "LIBERADA";
+		  $registro = join(";",@apagar);  
+		  push (@comprometidos, $registro);
+		  &actualizarDisponibilidad($apagar[3]);    	
+		} else { #No hay disponibilidad
+		    #Siguen como A PAGAR
+		    push (@comprometidos, $registro);
+		  }
+	      }
+	  }
+	}
+
+	if ( $modobarr eq "-bf" ){
+	  $valorMayor = &fechaEsMayor($fechaapagar);  
+	  $valorMenor = &fechaEsMenor($fechaapagar);  
+	  if ( $valorMayor && $valorMenor ){
+	      #Esta en el rango pedido, me fijo si esta comprometido
+	      if ( $apagar[1] eq "A PAGAR" ){
+		if (&checkDisponibilidad($apagar[3])){ #Hay disponibilidad
+		  #Tengo que setear como LIBERADA
+		  $apagar[1] = "LIBERADA";
+		  $registro = join(";",@apagar);  
+		  push (@comprometidos, $registro);
+		  &actualizarDisponibilidad($apagar[3]);    	
+		} else { #No hay disponibilidad
+		    #Siguen como A PAGAR
+		    push (@comprometidos, $registro);
+		  }
+	      }
+	  }
+	}
+	
+	if ( $modobarr eq "-bfi" ){
+	  $fechahasta = $fechalimite;
+	  $valorMayor = &fechaEsMayor($fechaapagar);  
+	  $valorMenor = &fechaEsMenor($fechaapagar);
+	  if ( $valorMayor && $valorMenor && ($montoapagar > $montodesde) && ($montoapagar < $montohasta ) ){
+	      #Esta en el rango pedido, me fijo si esta comprometido
+	      if ( $apagar[1] eq "A PAGAR" ){
+		if (&checkDisponibilidad($apagar[3])){ #Hay disponibilidad
+		  #print "registro comprometido\n";
+		  #Tengo que setear como LIBERADA
+		  $apagar[1] = "LIBERADA";
+		  $registro = join(";",@apagar);  
+		  push (@comprometidos, $registro);
+		  &actualizarDisponibilidad($apagar[3]);    	
+		} else { #No hay disponibilidad
+		    #Siguen como A PAGAR
+		    push (@comprometidos, $registro);
+		  }
+	      }
+	  }
+	}
+      }
+      close ( ENT );
 }
 
-
-
 #################################
-#		$0 archivo $1 dir_dest
+#		Fepago		
 #################################
-sub backup_archivo{
-	@num=`ls | sed \'s/.*\\.\\(.*\\)\$/\\1/g\' | sort -n`;
-	$ultima_version= $num[-1];
-	$ultima_version++;
-	$cmd = "cp $_[0] $_[1]/$_[0]\.$ultima_version";
-	system($cmd);
+#&estaCorriendoFepago;
+#&estaCorriendoFeprima;
+#&initAmbiente;
+&leerPresupuesto;
+#&mostrarPresupuesto;
+&pedirParametros;
+
+while ($modoejec ne "-q"){
+  &inicializarLog;
+  &determinarComprometidos;
+  &mostrarRegistrosComprometidos;
+  #&mostrarPresupuestoMem;
+  &mostrarPresupuesto;
+
+  if ($modoejec eq "-ma"){ #Modo Actualización -> Debo persistir los cambios
+    &guardarApagarOld;
+    &guardarPresuOld;
+    &crearApagarNew;
+    &crearPresuNew;
+  }
+  &pedirParametros;
 }
-
-#################################
-#		Fepago		#
-#################################
-
-&estaCorriendoFepago;
-&estaCorriendoFeprima;
-&initiAmbiente;
+print "Fin del proceso FEPAGO\n";
 
 # end Fepago

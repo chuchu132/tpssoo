@@ -66,6 +66,7 @@ cant_campos=${#array[@]}
 
 if [ $cant_campos -eq 10 ]
 then
+echo "entro"
 	ptoVentaValido ${array[2]}
 	puntoVenta=$?
 	comprobanteValido  ${array[3]}
@@ -80,7 +81,7 @@ then
 		then
 	        if [ `echo ${array[6]} | grep "^[0-9]*\.[0-9][0-9]$"` ] && [ `echo ${array[7]} | grep "^[0-9]*\.[0-9][0-9]$"` ] &&   [ `echo ${array[8]} | grep "^[0-9]*\.[0-9][0-9]$"` ] && [ `echo ${array[9]} | grep "^[0-9]*\.[0-9][0-9]$"` ]
 	        then
-				IFS=$OIFS       
+					echo "dentro del 4to if"IFS=$OIFS       
 				return 1; # valido
 			fi
 		fi
@@ -99,9 +100,12 @@ return 0; #invalido
 #################################
 validarCabecera(){
 
+echo "Validando formato cabecera"
 	validar_formato_cabecera "$1"
+echo "Terima formato cabecera"
 	if [ $? -eq 1 ]
 	then
+echo "Terima formato cabecera4"
 		#	verifico que el proveedor este en el registro maestro	#
 		local cuit_prov=`head -n 1 "$1" | cut -d ';' -f 1`
 		local resultado=`grep "^[^;]*;${cuit_prov};[^;]*;[^;]*;[^;]*;[^;]*$" "$grupo/prin/maepro.txt"`
