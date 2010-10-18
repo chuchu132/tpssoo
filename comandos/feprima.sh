@@ -179,7 +179,26 @@ validarCabecera(){
 		
 		#	seteo las variables de fecha actual
 		fechaHoy
-	
+		
+		#	verifico la fecha de la factura
+		
+		local anio_fact=`head -n 1 "$1" | cut -d ';' -f 5 | cut -d '-' -f 1`
+		local mes_fact=`head -n 1 "$1" | cut -d ';' -f 5 | cut -d '-' -f 2`
+		local dia_fact=`head -n 1 "$1" | cut -d ';' -f 5 | cut -d '-' -f 3`
+		
+		if [ $anio_fact -gt $ANIO_HOY ]
+		then
+			return 1
+		fi
+		if [ $anio_fact -eq $ANIO_HOY ] && [ $mes_fact -gt $MES_HOY ]
+		then 
+			return 1
+		fi
+		if [ $anio_fact -eq $ANIO_HOY ] && [ $mes_fact -eq $MES_HOY ] && [ $dia_fact -gt $DIA_HOY ]
+		then
+			return 1
+		fi
+
 		#	verifico vencimiento del CAE	#
 		local fecha_cae=`head -n 1 "$1" | cut -d ';' -f 6`
 		if [ $ANIO_HOY -lt `echo $fecha_cae | cut -d '-' -f 1` ]
