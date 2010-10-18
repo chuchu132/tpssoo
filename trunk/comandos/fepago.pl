@@ -228,7 +228,7 @@ sub guardarPresuOld{
 #	Pide parametros al usuario y los carga en variables globales	
 #################################
 sub pedirParametros{
-
+	my(@args);
 	print "Ingrese parametros o -q para terminar el proceso\n";
 
 	$cadena = <STDIN>;
@@ -250,18 +250,24 @@ sub pedirParametros{
 	  $modobarr = $param[1];
 	  if ($modobarr eq "-bf"){
 	    #tomo 2 parametros
-	    $fechadesde = $param[2];
-	    $fechahasta = $param[3];
+	    &validarFecha ($fechadesde = $param[2]);
+	    &validarFecha ($fechahasta = $param[3]);
 	  }
 	  if ($modobarr eq "-bi"){
 	    #tomo 2 parametros
 	    $montodesde = $param[2];
 	    $montohasta = $param[3];
+		if (($montodesde < 0) or ($montohasta < 0)){
+			print "Los montos ingresados deben ser mayor a cero\n";
+			@args = ('glog.sh',"fepago","ERROR","Error. Monontos ingresados deben ser positivos.");
+		    system(@args);
+			exit 1;
+		}
 	  }
 	  if ($modobarr eq "-bfi"){
 	    #tomo 3 parametros
-	    $fechadesde = $param[2];
-	    $montodesde = $param[3];
+	    &validarFecha ($fechadesde = $param[2]);
+	    &validarFecha ($montodesde = $param[3]);
 	    $montohasta = $param[4];
 	  }
 	}
@@ -274,16 +280,33 @@ sub pedirParametros{
 }
 
 #################################
+#	Validar fecha
+#################################
+sub validarFecha(){
+	my($fecha,@args1,@args2);
+	$fecha=$_[0];
+	@args1 = ('fechaEsValida',"$fecha");
+	system(@args1);
+	if ( $? == 0){
+		print "Formato fecha invalido: $fecha\n";
+		print "Formato fecha valido: YYYY-MM-DD\n";
+		@args2 = ('glog.sh',"fepago","ERROR","Error. Fecha invalida: $fecha");
+	    system(@args2);
+		exit 1;
+	}	
+}
+
+#################################
 #	Inicializa el log	
 #################################
 
 sub inicializarLog{
-
+	my(@args);
 	$textIni="Inicio de fepago $cadena";
 	chop($textIni);
-	@args = ('glog.sh',"fepago","INFO","$textIni");
-      	system(@args);
-      return $result;
+	@args = ('glog.sh',"fepago","ERROR","$textIni");
+    system(@args);
+    return $result;
 }
 
 #################################
