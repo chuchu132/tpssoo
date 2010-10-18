@@ -228,7 +228,7 @@ sub guardarPresuOld{
 #	Pide parametros al usuario y los carga en variables globales	
 #################################
 sub pedirParametros{
-	my(@args);
+
 	print "Ingrese parametros o -q para terminar el proceso\n";
 
 	$cadena = <STDIN>;
@@ -255,20 +255,14 @@ sub pedirParametros{
 	  }
 	  if ($modobarr eq "-bi"){
 	    #tomo 2 parametros
-	    $montodesde = $param[2];
-	    $montohasta = $param[3];
-		if (($montodesde < 0) or ($montohasta < 0)){
-			print "Los montos ingresados deben ser mayor a cero\n";
-			@args = ('glog.sh',"fepago","ERROR","Error. Monontos ingresados deben ser positivos.");
-		    system(@args);
-			exit 1;
+	    &validarMonto ($montodesde = $param[2]);
+	    &validarMonto ($montohasta = $param[3]);
 		}
-	  }
 	  if ($modobarr eq "-bfi"){
 	    #tomo 3 parametros
 	    &validarFecha ($fechadesde = $param[2]);
 	    &validarFecha ($montodesde = $param[3]);
-	    $montohasta = $param[4];
+	    &validarMonto ($montohasta = $param[4]);
 	  }
 	}
 	else {
@@ -294,6 +288,29 @@ sub validarFecha(){
 	    system(@args2);
 		exit 1;
 	}	
+}
+#################################
+#	Validar monto
+#################################
+sub validarMonto(){
+	my($monto,@args2);
+	$monto=$_[0];
+	print "monto a validar $monto\n";
+	if ($monto < 0){
+		print "El monto: $monto es negativo\n";
+		@args2 = ('glog.sh',"fepago","ERROR","Error. Monto negativo: $monto.");
+	    system(@args2);
+		exit 1;
+	}
+	if ($monto=~ /^[0-9]*\.[0-9][0-9]/){
+		return;
+	}
+
+	print "Formato monto no valido: $monto\n";
+	print "Formato monto valido: numero.2decimales (ej. 54.00)\n";
+	@args2 = ('glog.sh',"fepago","ERROR","Error. Monto invalida: $monto");
+    system(@args2);
+	exit 1;	
 }
 
 #################################
