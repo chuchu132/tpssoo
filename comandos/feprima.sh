@@ -13,68 +13,6 @@
 ##############################
 
 
-
-fechaEsValida(){
-local rdo=`echo "$1" | grep "^[0-9]\{4\}-[0-1][0-9]-[0-3][0-9]$"`
-if [ -z $rdo ] 
-then
-	return 0 #invalida
-fi
-
-OIFS=$IFS
-IFS='-'
-arr=($1)
-
-dd=${arr[2]}
-mm=${arr[1]}
-yy=${arr[0]}
- 
-days=0
- 
-if [ $mm -eq 0 ] || [ $mm -gt 12 ]
-then
-    IFS=$OFS
-    return 0 #invalida
-fi
- 
-case $mm in
-   01) days=31;;
-   02) days=28 ;;
-   03) days=31 ;;
-   04) days=30 ;;
-   05) days=31 ;;
-   06) days=30 ;;
-   07) days=31 ;;
-   08) days=31 ;;
-   09) days=30 ;;
-   10) days=31 ;;
-   11) days=30 ;;
-   12) days=31 ;;
-    *)  days=-1 ;;
-esac
-
-if [ $mm -eq 2 ]
-then
-	if [ $((yy % 4)) -eq 0 ]
-	then
-		if [ $((yy % 100)) -ne 0 ] || [ $((yy % 400)) -eq 0 ]
-		then
-			days=29
-		fi
-	fi
-fi
-
-if [ $dd -eq 0 ] || [ $dd -gt $days ]
-then
-	IFS=$OFS
-	return 0 #invalida
-fi
-
-IFS=$OFS
-return 1 #valida
-
-}
-
 esDuplicado(){
 	local f	
 	local aceptados=`ls "$ACEPTADOS"`
@@ -87,7 +25,6 @@ esDuplicado(){
 	done
 	return 0
 }
-
 
 ptoVentaValido(){
 if [ `echo $1 | grep "^[0-9]\{4\}$"` ]
@@ -168,7 +105,7 @@ validarCabecera(){
 		#	verifico que el proveedor este en el registro maestro	#
 		local cuit_prov=`head -n 1 "$1" | cut -d ';' -f 1`
 		local resultado=`grep "^[^;]*;${cuit_prov};[^;]*;[^;]*;[^;]*;[^;]*$" "$grupo/prin/maepro.txt"`
-		if [ -z $resultado ]
+		if [ -z "$resultado" ]
 		then
 			glog.sh feprima WARN "No existe el proveedor con CUIT $cuit_prov en el archivo maestro de proveedores"
 			return 1

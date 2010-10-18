@@ -168,7 +168,7 @@ fi
 
 #	Verificar comandos	#
 
-for cmd in fepini.sh feponio.sh feprima.sh glog.sh Mover
+for cmd in fepini.sh feponio.sh feprima.sh glog.sh Mover fechaEsValida
 do
 	if [ ! -e "$grupo/comandos/$cmd" ]
 	then

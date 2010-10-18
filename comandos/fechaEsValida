@@ -1,0 +1,65 @@
+#!/bin/bash 
+
+#####################################################################
+#	Verifica si una fecha es valida, tanto el formato como los dias	#
+#	Return: 	1 <-> Valida	0 <-> Invalida						#
+#####################################################################
+
+rdo=`echo "$1" | grep "^[0-9]\{4\}-[0-1][0-9]-[0-3][0-9]$"`
+if [ -z $rdo ] 
+then
+	exit 0 #invalida
+fi
+
+OIFS=$IFS
+IFS='-'
+arr=($1)
+
+dd=${arr[2]}
+mm=${arr[1]}
+yy=${arr[0]}
+ 
+days=0
+ 
+if [ $mm -eq 0 ] || [ $mm -gt 12 ]
+then
+    IFS=$OFS
+    exit 0 #invalida
+fi
+ 
+case $mm in
+   01) days=31;;
+   02) days=28 ;;
+   03) days=31 ;;
+   04) days=30 ;;
+   05) days=31 ;;
+   06) days=30 ;;
+   07) days=31 ;;
+   08) days=31 ;;
+   09) days=30 ;;
+   10) days=31 ;;
+   11) days=30 ;;
+   12) days=31 ;;
+    *)  days=-1 ;;
+esac
+
+if [ $mm -eq 2 ]
+then
+	if [ $((yy % 4)) -eq 0 ]
+	then
+		if [ $((yy % 100)) -ne 0 ] || [ $((yy % 400)) -eq 0 ]
+		then
+			days=29
+		fi
+	fi
+fi
+
+if [ $dd -eq 0 ] || [ $dd -gt $days ]
+then
+	IFS=$OFS
+	exit 0 #invalida
+fi
+
+IFS=$OFS
+exit 1 #valida
+
