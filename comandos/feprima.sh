@@ -423,3 +423,26 @@ Pos-condición: se agrega un registro al final del archivo \$grupo/facturas/apag
 
 *******************************************************************************"
 }
+
+#########################
+# feprima                               
+#########################
+if [ -z $INI_FEPINI ]
+then
+        echo No se ha inicializado el ambiente. Debe ejecutarse el comando \". fepini.sh\" previamente.
+        ./glog.sh feprima SERROR "No se ha inicializado el ambiente."
+        exit 1
+fi
+
+bloquear "$0"
+rdo=$?
+if [ $rdo -eq 0 ]
+then
+        procesarArchivos
+        desbloquear "$0"
+        rdo=$?
+fi
+
+exit $rdo
+
+#end feprima
