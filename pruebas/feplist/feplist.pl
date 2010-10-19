@@ -69,7 +69,7 @@ sub Params
 	($#ARGV == -1 || $ARGV[0] eq '-h' || $ARGV[0] eq '--help') && Use( );
 
 	# El primer parametro es fijo: $TOPAY, $FREED o $BUDGET
-	($ARGV[0] ne $TOPAY) && ($ARGV[0] ne $FREED) && ($ARGV[0] ne $BUDGET) && (Use( "Invalid argument type ($ARGV[0])." ));
+	($ARGV[0] ne $TOPAY) && ($ARGV[0] ne $FREED) && ($ARGV[0] ne $BUDGET) && (Use( "Invalid argument type ($ARGV[0])" ));
 
 	# Cargo el tipo de listado
 	$params{$TYPE}=$ARGV[0];
@@ -116,10 +116,10 @@ sub Params
 		elsif ( $argument eq $MONEY )
 		{
 			# Listado Presupuesto no tiene esta opcion
-			($params{$TYPE} eq $BUDGET) && (Use("Budget list only permits output option."));
+			($params{$TYPE} eq $BUDGET) && (Use("Budget list only permits output option"));
 
 			# Valido que este en el formato correcto
-			(!($value =~ m/\[[1-9][0-9]*.[0-9]{2}:[1-9][0-9]*.[0-9]{2}\]/)) && Use( "Invalid format. Check money parameter ($value)." );
+			(!($value =~ m/\[[1-9][0-9]*.[0-9]{2}:[1-9][0-9]*.[0-9]{2}\]/)) && Use( "Invalid format. Check money parameter ($value)" );
 
 			# Separo los importes
 			$index = index ( $value, ':', 0 );
@@ -127,7 +127,7 @@ sub Params
 			$upper = substr( $value, $index + 1, length( $value ) - $index - 2 );
 			
 			# Valido el rango
-			($lower > $upper) && (Use( "Invalid range. Check money parameter ($value)." ));
+			($lower > $upper) && (Use( "Invalid range. Check money parameter ($value)" ));
 
 			# Ingreso los parametros
 			$params{$MONEY} = '1';
@@ -137,7 +137,7 @@ sub Params
 		elsif ( $argument eq $DATE )
 		{
 			# Listado Presupuesto no tiene esta opcion
-			($params{$TYPE} eq $BUDGET) && (Use("Budget list only permits output option."));
+			($params{$TYPE} eq $BUDGET) && (Use("Budget list only permits output option"));
 
 			# Valido que este en el formato correcto
 			(!($value =~ m/\[[12][0-9]{3}[01][0-9][0-3][0-9]:[12][0-9]{3}[01][0-9][0-3][0-9]\]/)) && Use( "Invalid format. Check date parameter ($value)." );
@@ -152,10 +152,10 @@ sub Params
 
 			# Valido que sea una fecha
 			$value = substr( $lower, 4, 2 ) . '/' . substr( $lower, 6, 2 ) . '/' . substr( $lower, 0, 4 ) ;
-			(`date --date "$value" 2>/dev/null`) || (Use( "Invalid lower date ($lower)."));
+			(`date --date "$value" 2>/dev/null`) || (Use( "Invalid lower date ($lower)"));
 
 			$value = substr( $upper, 4, 2 ) . '/' . substr( $upper, 6, 2 ) . '/' . substr( $upper, 0, 4 ) ;
-			(`date --date "$value" 2>/dev/null`) || (Use( "Invalid upper date ($upper)."));
+			(`date --date "$value" 2>/dev/null`) || (Use( "Invalid upper date ($upper)"));
 
 			# Ingreso los parametros
 			$params{$DATE} = '1';
@@ -268,11 +268,11 @@ sub Print
 	$toScreen	= ($type eq $OUTDSP || $type eq $OUTALL) ? 1 : 0;
 
 	# Abro el archivo correspondiente
-	( $toFile ) && (( open( FILE, "+>> $params{$OUTPATH}" )) || FatalError( "IO: Couldn\'t open file \"$params{$OUTPATH}\"." ));
+	( $toFile ) && (( open( FILE, "+>> $params{$OUTPATH}" )) || FatalError( "IO: Couldn\'t open file \"$params{$OUTPATH}\"" ));
 
 	# Imprimo el titulo del listado
 	($toScreen) && ( print ( "$title\n" ) );
-	( $toFile ) && ((print (FILE "$title\n")) || FatalError( "IO: Couldn\'t write to file \"$params{$OUTPATH}\"." ));
+	( $toFile ) && ((print (FILE "$title\n")) || FatalError( "IO: Couldn\'t write to file \"$params{$OUTPATH}\"" ));
 
 	# Imprimo el cuerpo del listado
 	foreach $dat (@data)
@@ -281,11 +281,11 @@ sub Print
 		$tmp = sprintf ( $format . "\n", @row );
 
 		($toScreen) && ( printf ( "$tmp" ) );
-		( $toFile ) && ((printf (FILE "$tmp" )) || FatalError( "IO: Couldn\'t write to file \"$params{$OUTPATH}\"." ));
+		( $toFile ) && ((printf (FILE "$tmp" )) || FatalError( "IO: Couldn\'t write to file \"$params{$OUTPATH}\"" ));
 	}
 
 	# Dejo una linea vacia al final del archivo para que quede legible
-	($toFile) && ((print (FILE '~'x80 . "\n" )) || FatalError( "IO: Couldn\'t write to file \"$params{$OUTPATH}\"." ));
+	($toFile) && ((print (FILE '~'x80 . "\n" )) || FatalError( "IO: Couldn\'t write to file \"$params{$OUTPATH}\"" ));
 
 	# Cierro el archivo
 	( $toFile ) && ( close( FILE ) );
@@ -310,7 +310,7 @@ sub DataBudget
 	$pathFile = "$BUDGETDIR/$BUDGETNAME.txt";
 
 	# Abro el archivo en solo lectura.
-	(open( FILE, "< $pathFile" )) || (FatalError( "IO: Couldn\'t open \"$pathFile\"." ));
+	(open( FILE, "< $pathFile" )) || (FatalError( "IO: Couldn\'t open \"$pathFile\"" ));
 
 	# Seteo los rangos de valores.
 	$ranges{'11'} = "<   1000";
@@ -393,7 +393,7 @@ sub FilterBills
 	$tmp="$BILLDIR/$TOPAYNAME.txt";
 
 	# Abro archivo
-	(open( FILE, "< $tmp")) || (FatalError( "IO: Couldn\'t open \"$tmp\"." ));
+	(open( FILE, "< $tmp")) || (FatalError( "IO: Couldn\'t open \"$tmp\"" ));
 	
 	# Filtrado segun parametros
 	while ( $row=<FILE> )
@@ -438,7 +438,7 @@ sub DetailBills
 		$tmp="$BILLACPDIR/$spl[1]";
 
 		# Tomo los datos de la cabecera
-		($bill=`head -1 "$tmp" 2>/dev/null`) || (FatalError( "IO: Couldn\'t open \"$tmp\"." ));
+		($bill=`head -1 "$tmp" 2>/dev/null`) || (FatalError( "IO: Couldn\'t open \"$tmp\"" ));
 
 		# Agrego la factura a la coleccion de facturas
 		push( @data, $bill );
@@ -626,14 +626,36 @@ sub CreateReport
 # -----------------------------------------------------------------------------
 sub Use 
 {
-	print "Use: @_\n";
+	(scalar(@_) > 0) && (print "@_\n");
+	print "Useage: feplist.pl [LIST_TYPE] [OPTIONS]\n";
+	print "Prints the list requested according to the file associated.\n\n";
+	print "List types:\n";
+	print " -b     Budget list. Related to $BUDGETNAME.txt file.\n";
+	print " -fp    Bills to pay list. Related to $TOPAYNAME.txt file.\n";
+	print " -ff    Bills released list. Related to $TOPAYNAME.txt file.\n\n";
+	print "Options:\n";
+	print "  -o=OUTPUT[:PATH]   OUTPUT options:\n";
+	print "      + display: prints on the display (default). The PATH opcion is no available.\n";
+	print "      + file:    prints on the file \$GRUPO$OUTDIRD/($TOPAYNAME|$FREEDNAME|$BUDGETNAME).lst \n";
+	print "                 accoring to the LIST_TYPE. It can be overriden with the option PATH.\n";
+	print "      + all:     prints on the display and on a file. It can be combined with th PATH option.\n\n";
+	print "  -m=[loAmount:hiAmount]  Listings filters for the Bills in the range between.\n";
+	print "                          loAmount and hiAmount. The numeric format is XXXX.xx\n\n";
+	print "  -d=[loDate:hiDate]  Listings filters for the Bills in the range between loDate and hiDate.\n";
+	print "                      The date format is yyyymmddd.\n\n";
+	print "Examples:\n";
+	print ">./feplist.pl -b\n";
+	print ">./feplist.pl -b  -o=file:./budgetList\n";
+	print ">./feplist.pl -fp -m=[100.00:500.00] -o=all\n";
+	print ">-/feplist.pl -ff -m=[40.30:200.30] -d=[20100528:20100628] -o=file\n";
+	
 	exit 0;
 }
 
 # -----------------------------------------------------------------------------
 sub FatalError
 {
-	printf ( "Error: @_\n" );
+	printf ( "Error: @_.Check the GRUPO variable. It should be set to the correspondant directory. Then exported.\n" );
 	exit 3;
 }
 
