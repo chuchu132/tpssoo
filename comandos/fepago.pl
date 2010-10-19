@@ -18,9 +18,9 @@ $fechahasta;
 $montodesde;
 $montohasta;
 $fechalimite = "2050-12-31";
-$entrada = "/facturas/apagar.txt";
+$entrada = $ENV{"APAGAR"};#"/facturas/apagar.txt";
 #$entrada = "apagar.txt";
-$presupuesto = "/prin/presu.txt";
+$presupuesto = $ENV{"PRESUPUESTO"}; #"/prin/presu.txt";
 #$presupuesto = "presu.txt";
 #Registros a incluir en el nuevo apagar.txt
 @regApagar;
@@ -38,9 +38,6 @@ sub estaCorriendoFepago{
 		print 'Error: fepago ya se esta ejecutando'."\n";
 		exit 1;
 	}
-	else{
-		exit 0;
-	}
 }
 
 ##################################
@@ -53,9 +50,6 @@ sub estaCorriendoFeprima{
 		print 'Error: feprima ya se esta ejecutando'."\n";
 		exit 1;
 	}
-	else{
-		exit 0;
-	}
 }
 
 #########################
@@ -63,7 +57,7 @@ sub estaCorriendoFeprima{
 #########################
 
 sub initAmbiente{
-	if ( -z $INI_FEPINI )
+	if ( ! $ENV{"INI_FEPINI"} )
 	{
 		print 'No se ha inicializado el ambiente. Debe ejecutarse el comando fepini.sh previamente'. "\n";
 		$text="No se ha inicializado el ambiente";
@@ -72,9 +66,7 @@ sub initAmbiente{
 		system(@args);
 		exit 1;
 	}
-	else{
-		exit 0;
-	}	
+		
 }
 
 ####################################
