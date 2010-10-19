@@ -427,6 +427,12 @@ Pos-condición: se agrega un registro al final del archivo \$grupo/facturas/apag
 #########################
 # feprima                               
 #########################
+if [ $# -gt 0 ]
+then
+	print_help
+	exit 1
+fi
+
 if [ -z $INI_FEPINI ]
 then
         echo No se ha inicializado el ambiente. Debe ejecutarse el comando \". fepini.sh\" previamente.

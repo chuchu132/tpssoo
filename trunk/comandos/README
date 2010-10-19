@@ -9,7 +9,15 @@ Para ejecutar el programa de pago de facturas electronicas:
 4) para volver a procesar archivos simplemente ejecutar startfe
 	> startfe.sh
 
-
+Para correr los comandos por separado:
+1) si el ambiente está inicializado, ejecutar de la forma:
+	> comando
+ si el ambiente no ha sido inicializado:
+	> ./comando
+o bien
+	> bash comando
+	
+2) El ambiente debe estar inicializado para que algunos comandos funcionen. De lo contrario se imprimirá un mensaje.
 
 Para cargar las pruebas:
 1) borrar los archivos de las carpetas temp, rechazados, aceptados, arribos y recibidos
