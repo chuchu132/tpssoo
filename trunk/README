@@ -1,0 +1,37 @@
+Pasos de la instalación del tp
+1.Inserte el dispositivo de almacenamiento con el contenido del trabajo práctico (cd,pen drive, etc).
+2.Crear en el directorio de usuario un subdirectorio grupo04. El path será: home/user/grupo04
+3.Copiar el archivo TP.tar.gz en el directorio que se nombró en el punto 2.
+4.Descomprimir el archivo TP.tar.gz para poder obtener un TP.tar. Se abre una termina en la ruta especificada en el punto 2 y se ejecuta el siguiente comando:
+$	tar xzvf TP.tar.gz 
+5.Luego de descomprimir, ejecutaremos el instalar.sh desde el directorio actual.
+		$	./instalar.sh
+	El instalar descomprime carpeta.tar generando la jerarquías de carpetas necesarias para el tp. 
+6.Una vez ejecutado el instalador.sh, nos dirigimos al subdirectorio comandos de la siguiente manera:
+ 	$ cd
+	$ cd comandos
+7.Dentro de la ruta actual (home/user/grupo04/comandos), se procede a ejecutar los siguientes comandos, cada uno con sus respectivos parámetros:
+
+- Correr el script fepini con el comando: 
+	$ . fepini.sh
+- Para detener el demonio corre el stopfe:
+	$ stopfe.sh
+- Para volver a procesar archivos simplemente ejecutar el startfe.
+	$ startfe.sh
+
+8.Cada comando indicara si la salida fue exitoso o no, enviando por el archivo de log el detalle del mismo.(/comandos/log)
+
+9. Para correr los comandos por separado:
+ si el ambiente está inicializado, ejecutar de la forma:
+	$ comando
+ si el ambiente no ha sido inicializado:
+	$ ./comando
+o bien
+	$ bash comando
+El ambiente debe estar inicializado para que algunos comandos funcionen. De lo contrario se imprimirá un mensaje.
+
+10. Para cargar las pruebas:
+1) borrar los archivos de las carpetas temp, rechazados, aceptados, arribos y recibidos
+2) copiar los archivos de prueba a la carpeta aceptados
+3) ejecutar el programa de pago de facturas electronicas
+
