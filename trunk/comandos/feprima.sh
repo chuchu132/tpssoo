@@ -12,7 +12,10 @@
 #       1 <-> valido - true
 ##############################
 
-
+########################################
+# Verifica si el archivo pasado en $1
+# ya fue aceptado.
+########################################
 esDuplicado(){
         local f 
         local aceptados=`ls "$ACEPTADOS"`
@@ -26,6 +29,10 @@ esDuplicado(){
         return 0
 }
 
+########################################
+# Valida el valor del punto de venta
+# pasado en $1
+########################################
 ptoVentaValido(){
 if [ `echo $1 | grep "^[0-9]\{4\}$"` ]
 then 
@@ -38,6 +45,10 @@ fi
 return  0 #invalido
 } 
 
+########################################
+# Valida el valor del numero de comprobante
+# pasado en $1
+########################################
 comprobanteValido(){
 if [ `echo $1 | grep "^[0-9]\{8\}$"` ]
 then 
@@ -50,13 +61,11 @@ fi
 return  0 #invalido
 } 
 
+########################################
+# Verifica que todos los campos del registro cabecera 
+# pasado en $1 esten bien formados.
+########################################
 validar_formato_cabecera(){
-#0 CUITProveedor  11 Dígitos. Clave Única de Identificación Tributaria
-#1 codigoTipoComprobante 1 Carácter. VALORES posibles A B C E
-#2 numeroPuntoVenta 4 Caracteres. Valores posibles 0001 a 9998
-#3 numeroComprobante 8 Caracteres. Valores posibles 00000001 a 99999998
-#4 fechaFactura
-#5 fechaVencimientoCAE
 
 cabecera=`head -n 1 "$1"`
 OIFS=$IFS
@@ -91,12 +100,12 @@ return 0; #invalido
 }
 
 
-#################################
+#########################################
 #       $1: archivo a validar           #
-#       Return:         0 <-> OK                #
-#                               1 <-> erronea   #
-#                               2 <-> vencida   #
-#################################
+#       Return:         0 <-> OK        #
+#                       1 <-> erronea   #
+#                       2 <-> vencida   #
+#########################################
 validarCabecera(){
 
         validar_formato_cabecera "$1"
@@ -194,11 +203,10 @@ esta_gravado(){
     fi
 } 
 
-#DescItem N Caracteres. Descripción del Item
-#PrecioItem Importe (N enteros y 2 dígitos decimales). Valor del Item antes de aplicar IVA
-#tasaIVAItem Importe (N enteros y 2 dígitos decimales). Tasa de IVA aplicable al ítem. Los productos no gravados tienen tasa de iva cero. El valor habitual es 21. Representa un porcentaje.
-#montoIVAItem           Importe (N enteros y 2 dígitos decimales). Monto del Iva resultante de aplicar la tasa al precio.
-
+#################################################
+# Verifica que todos los campos del registro item 
+# pasado en $1 esten bien formados.
+#################################################
 validarFormatoItems(){
         OIFS=$IFS
         IFS=';'
@@ -217,13 +225,13 @@ validarFormatoItems(){
 }
 
 
-#####################################
-#       Valida los items de la factura  #
-#       $1: archivo a validar                   #
-#       return  0 <-> OK                                #
-#                       1 <-> error formato             #
-#                       2 <-> error totales             #
-#####################################
+##########################################################
+#       Valida los items de la factura  
+#       $1: archivo a validar                   
+#       return  0 <-> OK                                
+#                       1 <-> error formato             
+#                       2 <-> error totales             
+##########################################################
 validarItems(){
     local suma_monto_gravado=0
     local suma_monto_no_gravado=0
@@ -265,7 +273,7 @@ IFS='
     
         suma_monto_iva=`echo "$suma_monto_iva" | bc -l | awk '{printf ("%.2f",$suma_monto_iva)}'`       
         
-#esto es para q coincida con el formato del archivo, sino me tira q no son iguales
+	#esto es para q coincida con el formato del archivo
         if [ "$suma_monto_no_gravado" = "0" ] 
         then
                 suma_monto_no_gravado="0.00"
@@ -293,10 +301,11 @@ IFS='
     return 2
 }
 
-#############################################
-#       $1: archivo de la factura                               #
-#       necesita seteada la variable COND_PAGO  #
-#############################################
+####################################################
+# Graba un registro al final del archivo apagar.txt
+#       $1: archivo de la factura                  
+#       necesita seteada la variable COND_PAGO
+####################################################
 grabarRegistro(){
         local cae=`basename "$1"`
         local monto=`head -n 1 "$1" | cut -d ';' -f 10`
@@ -311,9 +320,10 @@ grabarRegistro(){
 }
 
 
-#################################
-#       $1: archivo a procesar          #
-#################################
+#######################################################
+# Valida y procesa el archivo pasado por parametro
+#       $1: archivo a procesar          
+#######################################################
 procesar(){
     validarCabecera "${RECIBIDOS}/$1"
     local rdo=$?
@@ -358,6 +368,10 @@ procesar(){
 
 }
 
+############################################
+# Procesa todos los archivos disponibles en $RECIBIDOS
+#
+############################################
 procesarArchivos(){
 
         cant_arch=`ls -l "$RECIBIDOS" | wc -l`
@@ -392,25 +406,20 @@ procesarArchivos(){
         glog.sh feprima INFO "=============================================================="
 }
 
-#########################
-# feprima                               
-#########################
-if [ -z $INI_FEPINI ]
-then
-        echo No se ha inicializado el ambiente. Debe ejecutarse el comando \". fepini.sh\" previamente.
-        ./glog.sh feprima SERROR "No se ha inicializado el ambiente."
-        exit 1
-fi
 
-bloquear "$0"
-rdo=$?
-if [ $rdo -eq 0 ]
-then
-        procesarArchivos
-        desbloquear "$0"
-        rdo=$?
-fi
+print_help(){
+echo "
+*******************************************************************************
 
-exit $rdo
+Comando : feprima.sh 
 
-#end feprima
+Archivos de Input : Utiliza como input archivos que representan facturas ubicados en la carpeta \$grupo/recibidos.
+
+Archivos de Output : 	Genera el archivo de log  \$grupo/comandos/feprima.log donde registra todo lo sucedido durante la ejecución del comando y luego, si las validaciones dan error mueve el archivo procesado a \$grupo/rechazados, sino lo mueve a \$grupo/aceptados  y escribe en el archivo \$grupo/facturas/apagar.txt un registro con los datos de la factura procesada.
+
+Pre-condición: el ambiente fue inicializado y los archivos a procesar tienen el nombre bien formado.
+
+Pos-condición: se agrega un registro al final del archivo \$grupo/facturas/apagar.txt
+
+*******************************************************************************"
+}
