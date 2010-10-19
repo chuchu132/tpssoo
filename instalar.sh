@@ -2,7 +2,7 @@
 
 echo "Instalando"
 
-tar -xvf carpetas.tar > /dev/nul
+tar -xvf carpetas.tar > /dev/null
 if [ $? -ne 0 ]
 then
 	echo "Ocurrio un error durante la instalacion"
