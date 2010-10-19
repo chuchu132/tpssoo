@@ -2,7 +2,7 @@
 
 $TRUE = 1;
 $FALSE = 0;
-
+$GRUPO  = $ENV{'GRUPO'};
 #Clave: FUENTE => Valor: monto disponible
 %fuentes;
 #Cada elemento es un registro completo APAGAR
@@ -19,9 +19,10 @@ $montodesde;
 $montohasta;
 $fechalimite = "2050-12-31";
 #$entrada = "/facturas/apagar.txt";
-$entrada = "apagar.txt";
+print "grupo dice: $GRUPO\n";
+$entrada = "$GRUPO/pruebas/apagar.txt";
 #$presupuesto = "/prin/presu.txt";
-$presupuesto = "presu.txt";
+$presupuesto = "$grupo/pruebas/presu.txt";
 #Registros a incluir en el nuevo apagar.txt
 @regApagar;
 #Registros a incluir en el nuevo presu.txt

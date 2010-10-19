@@ -18,10 +18,8 @@ $fechahasta;
 $montodesde;
 $montohasta;
 $fechalimite = "2050-12-31";
-$entrada = $ENV{"APAGAR"};#"/facturas/apagar.txt";
-#$entrada = "apagar.txt";
-$presupuesto = $ENV{"PRESUPUESTO"}; #"/prin/presu.txt";
-#$presupuesto = "presu.txt";
+$entrada = "$ENV{'grupo'}/facturas/apagar.txt";
+$presupuesto = "$ENV{'grupo'}/prin/presu.txt";
 #Registros a incluir en el nuevo apagar.txt
 @regApagar;
 #Registros a incluir en el nuevo presu.txt
