@@ -655,7 +655,7 @@ sub Use
 # -----------------------------------------------------------------------------
 sub FatalError
 {
-	printf ( "Error: @_.Check the GRUPO variable. It should be set to the correspondant directory. Then exported.\n" );
+	printf ( "Error: @_.Check the \"grupo\" variable. It should be set to the correspondant directory. Then exported.\n" );
 	exit 3;
 }
 
