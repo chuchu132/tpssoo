@@ -118,16 +118,20 @@ sub Params
 			# Listado Presupuesto no tiene esta opcion
 			($params{$TYPE} eq $BUDGET) && (Use("Budget list only permits output option"));
 
-			# Valido que este en el formato correcto
-			(!($value =~ m/\[[1-9][0-9]*.[0-9]{2}:[1-9][0-9]*.[0-9]{2}\]/)) && Use( "Invalid format. Check money parameter ($value)" );
+			# Verifico que este el operador ':'
+			$index = index( $value, ':', 0 );
+			( $index == -1 ) && (Use( "No reference operator (:)" ));
 
-			# Separo los importes
-			$index = index ( $value, ':', 0 );
+			# Valido el formato y valores.
+			($value =~ m/\[(?:[0-9]{1,}\.[0-9]{2})?\:(?:[0-9]{1,}\.[0-9]{2})?\]/) || (Use( "Invalid format. Check money parameter ($value)" ));
+
+			# Separo los importes y verifico que exista al menos un valor de rango
 			$lower = substr( $value, 1, $index - 1 );
 			$upper = substr( $value, $index + 1, length( $value ) - $index - 2 );
+			($lower eq '') && ($upper eq '') && (Use( "Must define a low and/or max money value.\nEj: Lower than 10.00: m=[10.00:]\nEj: Grater than 10.00: m=[:10.00]\nEj: Between 10.00 and 20.00 m=[10.00:20.00]" ));
 			
 			# Valido el rango
-			($lower > $upper) && (Use( "Invalid range. Check money parameter ($value)" ));
+			($lower ne '') && ($upper ne '') &&	($lower > $upper) && (Use( "Invalid range. Check money parameter ($value)" ));
 
 			# Ingreso los parametros
 			$params{$MONEY} = '1';
@@ -140,22 +144,31 @@ sub Params
 			($params{$TYPE} eq $BUDGET) && (Use("Budget list only permits output option"));
 
 			# Valido que este en el formato correcto
-			(!($value =~ m/\[[12][0-9]{3}[01][0-9][0-3][0-9]:[12][0-9]{3}[01][0-9][0-3][0-9]\]/)) && Use( "Invalid format. Check date parameter ($value)." );
+			(!($value =~ m/\[(?:[12][0-9]{3}[01][0-9][0-3][0-9])?:(?:[12][0-9]{3}[01][0-9][0-3][0-9])?\]/)) && Use( "Invalid format. Check date parameter ($value)." );
 
 			# Separo los importes
 			$index = index ( $value, ':', 0 );
+			( $index == -1 ) && (Use( "No reference operator (:)" ));
+
+			# Separo las fechas y verifico que exista al menos un valor de rango
 			$lower = substr( $value, 1, $index - 1 );
 			$upper = substr( $value, $index + 1, length( $value ) - $index - 2 );
 			
 			# Valido el rango
-			($lower > $upper) && (Use( "Invalid range. Check date parameter ($value)." ));
+			($lower ne '') && ($upper ne '') &&	($lower > $upper) && (Use( "Must define a low and/or max date value.\nEj: Lower than 2010-10-01: m=[20101001:]\nEj: Grater than 2010-10-01: m=[:20101001]\nEj: Between 2010-10-01 and 2010-10-30 m=[20101001:20101030]" ));
 
 			# Valido que sea una fecha
-			$value = substr( $lower, 4, 2 ) . '/' . substr( $lower, 6, 2 ) . '/' . substr( $lower, 0, 4 ) ;
-			(`date --date "$value" 2>/dev/null`) || (Use( "Invalid lower date ($lower)"));
+			if ( $lower ne '' )
+			{
+				$value = substr( $lower, 4, 2 ) . '/' . substr( $lower, 6, 2 ) . '/' . substr( $lower, 0, 4 ) ;
+				(`date --date "$value" 2>/dev/null`) || (Use( "Invalid lower date ($lower)"));
+			}
 
-			$value = substr( $upper, 4, 2 ) . '/' . substr( $upper, 6, 2 ) . '/' . substr( $upper, 0, 4 ) ;
-			(`date --date "$value" 2>/dev/null`) || (Use( "Invalid upper date ($upper)"));
+			if ( $upper ne '' )
+			{
+				$value = substr( $upper, 4, 2 ) . '/' . substr( $upper, 6, 2 ) . '/' . substr( $upper, 0, 4 ) ;
+				(`date --date "$value" 2>/dev/null`) || (Use( "Invalid upper date ($upper)"));
+			}
 
 			# Ingreso los parametros
 			$params{$DATE} = '1';
@@ -386,8 +399,22 @@ sub FilterBills
 	# Cargo el filtro del estado... y resto de parametros.
 	($params{$TYPE} eq $TOPAY) && ($stat='A PAGAR'  );
 	($params{$TYPE} eq $FREED) && ($stat='LIBERADA' );
-	(defined($params{$MONEY})) && ($money=1) && ($mLo=$params{$MONEYLOWER}) && ($mUp=$params{$MONEYUPPER});
-	(defined($params{$DATE} )) && ($date=1 ) && ($dLo=$params{$DATELOWER} ) && ($dUp=$params{$DATEUPPER} );
+
+	# Cargo el filtro de dinero...
+	if ( defined($params{$MONEY}) )
+	{
+		$money 	= 1;
+		$mLo	= $params{$MONEYLOWER};
+		$mUp	= $params{$MONEYUPPER};
+	}
+
+	# Cargo el filtro de fecha...
+	if ( defined($params{$DATE}) )
+	{
+		$date	= 1;
+		$dLo	= $params{$DATELOWER};
+		$dUp	= $params{$DATEUPPER};
+	}
 
 	# Armo la ruta donde esta el archivo "apagar.txt"
 	$tmp="$BILLDIR/$TOPAYNAME.txt";
@@ -407,12 +434,25 @@ sub FilterBills
 		($reg[1] ne $stat ) && (next);
 
 		# Si esta el parametro "Money" filtro el monto...
-		($money) && (($reg[3] < $mLo) || ($reg[3] > $mUp)) && (next);
+		if ( $money )
+		{
+			($mLo ne '' && $mUp ne '') && (($reg[3] < $mLo) || ($reg[3] > $mUp)) && (next);
+			($mLo ne '' && $mUp eq '') && ($reg[3] > $mLo) && (next);
+			($mLo eq '' && $mUp ne '') && ($reg[3] < $mUp) && (next);
+			($mLo eq '' && $mUp eq '') && Debug ( 'Invalid Range: It shouldn\'t reach this point. Check Params Function.' )
+		}
 
 		# Si esta el parametro "Date" filtro la fecha...
-		@spl = split( '-', $reg[2] );
-		$tmp = sprintf( "%s%s%s", @spl );
-		($date) && (($tmp < $dLo) || ($tmp > $dUp)) && (next);
+		if ( $date )
+		{
+			@spl = split( '-', $reg[2] );
+			$tmp = sprintf( "%s%s%s", @spl );
+
+			($dLo ne '' && $dUp ne '') && (($tmp < $dLo) || ($tmp > $dUp)) && (next);
+			($dLo ne '' && $dUp eq '') && ($tmp > $dLo) && (next);
+			($dLo eq '' && $dUp ne '') && ($tmp < $dUp) && (next);
+			($dLo eq '' && $dUp eq '') && Debug ( 'Invalid Range: It shouldn\'t reach this point. Check Params Function.' )
+		}
 
 		# Este registro cumple con los filtrados.
 		push( @data, sprintf( "%s:%s", $tmp, $reg[0] ) );
