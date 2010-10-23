@@ -123,7 +123,7 @@ sub Params
 			( $index == -1 ) && (Use( "No reference operator (:)" ));
 
 			# Valido el formato y valores.
-			($value =~ m/\[(?:[0-9]{1,}\.[0-9]{2})?\:(?:[0-9]{1,}\.[0-9]{2})?\]/) || (Use( "Invalid format. Check money parameter ($value)" ));
+			($value =~ m/\[(?:[0-9]{1,}\.[0-9]{2})?\:(?:[0-9]{1,}\.[0-9]{2})?\]/) || (Use( "Invalid format. Check money parameter ($value). Money format XXXX.xx" ));
 
 			# Separo los importes y verifico que exista al menos un valor de rango
 			$lower = substr( $value, 1, $index - 1 );
@@ -144,7 +144,7 @@ sub Params
 			($params{$TYPE} eq $BUDGET) && (Use("Budget list only permits output option"));
 
 			# Valido que este en el formato correcto
-			(!($value =~ m/\[(?:[12][0-9]{3}[01][0-9][0-3][0-9])?:(?:[12][0-9]{3}[01][0-9][0-3][0-9])?\]/)) && Use( "Invalid format. Check date parameter ($value)." );
+			(!($value =~ m/\[(?:[12][0-9]{3}[01][0-9][0-3][0-9])?:(?:[12][0-9]{3}[01][0-9][0-3][0-9])?\]/)) && Use( "Invalid format. Check date parameter ($value). Date format yyyymmdd." );
 
 			# Separo los importes
 			$index = index ( $value, ':', 0 );
@@ -237,20 +237,48 @@ sub Title
 {
 	# Declaracion de variables locales
 	local( %params, $type, $time );
+	local( $lo, $up, $money, $date, $filter );
 
 	# Paso los Argumentos a Variables para que
 	# este explicito el uso del mismo
 	%params = @_;
 	$type   = $params{$TYPE};
 	
-	# Obtengo la fecha..-
+	# Obtengo la fecha.
 	$time=`date +"%H:%M %d-%m-%Y" 2>/dev/null`;
 	chomp( $time );
+
+#	FACTURAS A PAGAR
+#	FILTROS: IMPORTE ( 1000.00 << 2500.00 )  FECHA ( 2010-10-10 << 2010-10-28 )
+	if ( defined( $params{$MONEY} ) )
+	{
+		$lo = $params{$MONEYLOWER};
+		$up = $params{$MONEYUPPER};
+		
+		($lo ne '' && $up ne '') && ($money="IMPORTE ( $lo << $up)");
+		($lo ne '' && $up eq '') && ($money="IMPORTE ( <= $lo )");
+		($lo eq '' && $up ne '') && ($money="IMPORTE ( $up => )");
+	}
+
+	if ( defined( $params{$DATE} ) )
+	{
+		$lo = $params{$DATELOWER};
+		$up = $params{$DATEUPPER};
+		
+		($lo ne '' && $up ne '') && ($date="FECHA ( $lo << $up)");
+		($lo ne '' && $up eq '') && ($date="FECHA ( <= $lo )");
+		($lo eq '' && $up ne '') && ($date="FECHA ( $up => )");
+	}
+
+	# Nombre de los filtros.
+	($money ne '') && ($date ne '') && ($filter="FILTROS: $money - $date");
+	($money ne '') && ($date eq '') && ($filter="FILTRO: $money" );
+	($money eq '') && ($date ne '') && ($filter="FILTRO: $date" );
 	
 	# Dirijo, segun el tipo, a la funcion especifica para tomar titulo
-	($type eq $TOPAY ) && (return 'FACTURAS A PAGAR' . ' 'x78 . "$time\n" . '+'x110);
-	($type eq $FREED ) && (return 'FACTURAS LIBERADAS' . ' 'x76 . "$time\n" . '+'x110 );
-	($type eq $BUDGET) && (return 'PRESUPUESTO' . ' 'x38 . "$time\n" . '+'x65  );
+	($type eq $TOPAY ) && (return sprintf( "%-20s  %-50s  %15s\n" . '+'x110, 'FACTURAS A PAGAR'  , ($filter) || (' 'x70), $time ) );
+	($type eq $FREED ) && (return sprintf( "%-20s  %-50s  %15s\n" . '+'x110, 'FACTURAS LIBERADAS', ($filter) || (' 'x70), $time ) );
+	($type eq $BUDGET) && (return sprintf( "%-15s  %15s\n" . '+'x65, 'PRESUPUESTO' . ' 'x36, $time ) );
 
 	# No existe el "tipo": ERROR DE PROGRAMACION: "Params" lo tiene que detectar.
 	Debug ( 'Invalid Type: It shouldn\'t reach this point. Check Params Function.' );
@@ -298,7 +326,7 @@ sub Print
 	}
 
 	# Dejo una linea vacia al final del archivo para que quede legible
-	($toFile) && ((print (FILE '~'x80 . "\n" )) || FatalError( "IO: Couldn\'t write to file \"$params{$OUTPATH}\"" ));
+	($toFile) && ((print (FILE ":~\n" )) || FatalError( "IO: Couldn\'t write to file \"$params{$OUTPATH}\"" ));
 
 	# Cierro el archivo
 	( $toFile ) && ( close( FILE ) );
@@ -429,6 +457,8 @@ sub FilterBills
 	
 		# Separo el registro en los campos
 		@reg=split( ';', $row );
+		@spl = split( '-', $reg[2] );
+		$tmp = sprintf( "%s%s%s", @spl );
 
 		# Filtro el estado.
 		($reg[1] ne $stat ) && (next);
@@ -445,9 +475,6 @@ sub FilterBills
 		# Si esta el parametro "Date" filtro la fecha...
 		if ( $date )
 		{
-			@spl = split( '-', $reg[2] );
-			$tmp = sprintf( "%s%s%s", @spl );
-
 			($dLo ne '' && $dUp ne '') && (($tmp < $dLo) || ($tmp > $dUp)) && (next);
 			($dLo ne '' && $dUp eq '') && ($tmp > $dLo) && (next);
 			($dLo eq '' && $dUp ne '') && ($tmp < $dUp) && (next);
@@ -667,7 +694,7 @@ sub CreateReport
 sub Use 
 {
 	(scalar(@_) > 0) && (print "@_\n");
-	print "Useage: feplist.pl [LIST_TYPE] [OPTIONS]\n";
+	print "Useage: feplist.pl LIST_TYPE [OPTIONS]\n";
 	print "Prints the list requested according to the file associated.\n\n";
 	print "List types:\n";
 	print " -b     Budget list. Related to $BUDGETNAME.txt file.\n";
@@ -676,18 +703,20 @@ sub Use
 	print "Options:\n";
 	print "  -o=OUTPUT[:PATH]   OUTPUT options:\n";
 	print "      + display: prints on the display (default). The PATH opcion is no available.\n";
-	print "      + file:    prints on the file \$GRUPO$OUTDIRD/($TOPAYNAME|$FREEDNAME|$BUDGETNAME).lst \n";
+	print "      + file:    prints on the file \$GRUPO$OUTDIRD/($TOPAYNAME|$FREEDNAME|$BUDGETNAME).lst\n";
 	print "                 accoring to the LIST_TYPE. It can be overriden with the option PATH.\n";
 	print "      + all:     prints on the display and on a file. It can be combined with th PATH option.\n\n";
 	print "  -m=[loAmount:hiAmount]  Listings filters for the Bills in the range between.\n";
-	print "                          loAmount and hiAmount. The numeric format is XXXX.xx\n\n";
+	print "                          loAmount and hiAmount. The numeric format is XXXX.xx\n";
+	print "                          The parameters loAmount or hiAmount can be omited.\n\n";
 	print "  -d=[loDate:hiDate]  Listings filters for the Bills in the range between loDate and hiDate.\n";
-	print "                      The date format is yyyymmddd.\n\n";
+	print "                      The date format is yyyymmddd.The parameters loDate or hiDate can be omited.\n\n";
 	print "Examples:\n";
 	print ">./feplist.pl -b\n";
 	print ">./feplist.pl -b  -o=file:./budgetList\n";
 	print ">./feplist.pl -fp -m=[100.00:500.00] -o=all\n";
-	print ">-/feplist.pl -ff -m=[40.30:200.30] -d=[20100528:20100628] -o=file\n";
+	print ">./feplist.pl -ff -m=[40.30:200.30] -d=[20100528:20100628] -o=file\n";
+	print ">./feplist.pl -fp -m=[200.00:] -d=[20100201:]\n";
 	
 	exit 0;
 }
