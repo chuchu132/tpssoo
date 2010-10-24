@@ -177,10 +177,18 @@ existeArchivo "$2/`basename "$1"`"
 		archivo="$archivo/dup/"
 		#calculo la cantidad de archivos que tiene la carpeta dup
 		cantArch=`find "$archivo" -maxdepth 1 -type f | wc -l`
+		cantArch=`echo "$cantArch + 1" | bc -l` #le sumo uno a la cant actual para q empiece a contar desde 1
+		if [ $cantArch -lt 10 ]
+		then
+			cantArch="00${cantArch}"
+		else
+			if [ $cantArch -lt 100 ]; then
+				cantArch="0${cantArch}"
+			fi
+		fi
 		archivo="$archivo`basename "$1"`.$cantArch"
 		#echo "El archivo se movio a $archivo"
 		mv "$1" "$archivo"
 		escribirLog "$log" "WARN" "Mover exitoso: el archivo $1 no se pudo mover a $2 porque ya existe un archivo con ese nombre. El archivo se movio a $archivo"		
 	fi
 exit 0
-
