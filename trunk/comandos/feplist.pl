@@ -120,7 +120,7 @@ sub Params
 
 			# Verifico que este el operador ':'
 			$index = index( $value, ':', 0 );
-			( $index == -1 ) && (Use( "No reference operator (:)" ));
+			( $index == -1 ) && (Use( "No reference operator (:) in param ($value)" ));
 
 			# Valido el formato y valores.
 			($value =~ m/\[(?:[0-9]{1,}\.[0-9]{2})?\:(?:[0-9]{1,}\.[0-9]{2})?\]/) || (Use( "Invalid format. Check money parameter ($value). Money format XXXX.xx" ));
@@ -148,7 +148,7 @@ sub Params
 
 			# Separo los importes
 			$index = index ( $value, ':', 0 );
-			( $index == -1 ) && (Use( "No reference operator (:)" ));
+			( $index == -1 ) && (Use( "No reference operator (:) in param ($value)" ));
 
 			# Separo las fechas y verifico que exista al menos un valor de rango
 			$lower = substr( $value, 1, $index - 1 );
