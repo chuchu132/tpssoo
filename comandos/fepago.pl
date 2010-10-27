@@ -55,13 +55,16 @@ sub estaCorriendoFeprima{
 #########################
 
 sub initAmbiente{
+
 	if ( ! $ENV{"INI_FEPINI"} )
 	{
+		my( @args );
+
 		print 'No se ha inicializado el ambiente. Debe ejecutarse el comando fepini.sh previamente'. "\n";
 		$text="No se ha inicializado el ambiente";
 		chop($text);
-	      	@args = ('glog.sh',"fepago","SERROR","$text");
-		system(@args);
+		`bash ./glog.sh fepago SERROR "$text"`;
+
 		exit 1;
 	}
 		
@@ -93,7 +96,6 @@ sub leerPresupuesto{
 ####################################
 
 sub mostrarPresupuesto{
-
     my($FD,$linea,@campos,$nuevaLinea);
 
     open(FD,"<$presupuesto");
@@ -284,8 +286,7 @@ sub validarFecha(){
 	if ( $? == 0){
 		print "Formato fecha invalido: $fecha\n";
 		print "Formato fecha valido: YYYY-MM-DD\n";
-		@args2 = ('glog.sh',"fepago","ERROR","Error. Fecha invalida: $fecha");
-	    system(@args2);
+		`bash glog.sh fepago ERROR "Error. FEcha invalida: $fecha"`;
 		exit 1;
 	}	
 }
@@ -298,8 +299,8 @@ sub validarMonto(){
 	#print "monto a validar $monto\n";
 	if ($monto < 0){
 		print "El monto: $monto es negativo\n";
-		@args2 = ('glog.sh',"fepago","ERROR","Error. Monto negativo: $monto.");
-	    system(@args2);
+		`bash glog.sh fepago ERROR "Error. Monto negativo: $monto "Error. Monto negativo: $monto"`;
+
 		exit 1;
 	}
 	if ($monto=~ /^[0-9]*\.[0-9][0-9]$/){
@@ -308,8 +309,8 @@ sub validarMonto(){
 
 	print "Formato monto no valido: $monto\n";
 	print "Formato monto valido: numero.2decimales (ej. 54.00)\n";
-	@args2 = ('glog.sh',"fepago","ERROR","Error. Monto invalida: $monto");
-    system(@args2);
+	`bash glog.sh fepago ERROR "Error. Monto invalida: $monto"`;
+
 	exit 1;	
 }
 
@@ -320,9 +321,9 @@ sub validarMonto(){
 sub inicializarLog{
 	my(@args);
 	$textIni="Inicio de fepago $cadena";
-	chop($textIni);
-	@args = ('glog.sh',"fepago","ERROR","$textIni");
-    system(@args);
+	chomp($textIni);
+	`bash glog.sh fepago ERROR "$textIni"`;
+
     return $result;
 }
 
