@@ -20,11 +20,25 @@ $montohasta;
 $fechalimite = "2050-12-31";
 $entrada = "$ENV{'grupo'}/facturas/apagar.txt";
 $presupuesto = "$ENV{'grupo'}/prin/presu.txt";
+#$entrada = "apagar.txt";
+#$presupuesto = "presu.txt";
 #Registros a incluir en el nuevo apagar.txt
 @regApagar;
 #Registros a incluir en el nuevo presu.txt
 @regPresu;
 
+
+sub Bash
+{
+	$value=`bash -c "@_" 2>/dev/null`;
+	if ( $? != 0 )
+	{
+		return 0;
+	}
+
+	chomp( $value );
+	return $value;
+}
 
 ##################################
 # Verifica que no haya otro fepago corriendo	#
@@ -63,7 +77,8 @@ sub initAmbiente{
 		print 'No se ha inicializado el ambiente. Debe ejecutarse el comando fepini.sh previamente'. "\n";
 		$text="No se ha inicializado el ambiente";
 		chop($text);
-		`bash ./glog.sh fepago SERROR "$text"`;
+		#`bash ./glog.sh fepago SERROR "$text"`;
+		Bash( './glog.sh', 'fepago', 'ERROR', '$text' );
 
 		exit 1;
 	}
@@ -104,8 +119,14 @@ sub mostrarPresupuesto{
 	@campos=split(";",$linea);
 	print	$campos[0]." - ".$campos[1]." - ".$fuentes{$campos[0]}."\n";
 	
+	#Actualizo fecha
+	if ($campos[1] ne $fuentes{$campos[0]}){
+	  $campos[2] = $ENV{"FECHA_HOY"};
+	}
+
 	#se guardan indistintamente para -ms o -ma, solo para -ma se persisten
 	$nuevaLinea = $campos[0].";".$fuentes{$campos[0]}.";".$campos[2].";".$campos[3]."\n";
+	chomp($nuevaLinea);
 	push (@regPresu, $nuevaLinea);
     }
     close(FD);
@@ -138,7 +159,7 @@ sub getFuente{
 	$fuente="11";
     } elsif ( $monto >= 1000 && $monto<10000 ){
 	  $fuente="12";
-      } elsif ( $monto >= 1000 && $monto<10000 ){
+      } elsif ( $monto >= 10000 && $monto<50000 ){
 	    $fuente="13";
 	} elsif ( $monto >= 10000 && $monto<150000 ){
 	      $fuente="14";
@@ -159,7 +180,9 @@ sub checkDisponibilidad{
 
     #print "Verificando disponibilidad\n";
     $monto = $_[0];
+    #print "Monto a pagar $_[0]\n";
     $fuente= &getFuente($monto);
+    #print "Fuente disponible $fuentes{$fuente}\n";
     if($fuentes{$fuente} >= $monto){
 	#print "Hay disponibilidad\n";
 	return ($TRUE);
@@ -244,7 +267,7 @@ sub pedirParametros{
 	  $modoejec = $param[0];
 	}
 	else {
-	  print "Debe ingresar un modo de ejecucion (-ms,-ma o -q para terminar)\n";
+	  print "Debe ingresar un modo de ejecucion valido (-ms,-ma o -q para terminar)\n";
 	  #exit 0;
 	} 
 
@@ -267,8 +290,8 @@ sub pedirParametros{
 	    &validarMonto ($montohasta = $param[4]);
 	  }
 	}
-	else {
-	  print "Debe ingresar un modo de barrido (-bf,-bi o -bfi)\n";
+	elsif ( $param[0] ne "-q" ){
+	  print "Debe ingresar un modo de barrido valido (-bf,-bi o -bfi)\n";
 	  #exit 0;
 	}
     
@@ -286,7 +309,8 @@ sub validarFecha(){
 	if ( $? == 0){
 		print "Formato fecha invalido: $fecha\n";
 		print "Formato fecha valido: YYYY-MM-DD\n";
-		`bash glog.sh fepago ERROR "Error. FEcha invalida: $fecha"`;
+		#`bash glog.sh fepago ERROR "Error. Formato de fecha ingresada invalido: $fecha"`;
+		Bash( './glog.sh', 'fepago', 'ERROR', 'Formato de fecha ingresada invalido: $fecha' );
 		exit 1;
 	}	
 }
@@ -299,7 +323,8 @@ sub validarMonto(){
 	#print "monto a validar $monto\n";
 	if ($monto < 0){
 		print "El monto: $monto es negativo\n";
-		`bash glog.sh fepago ERROR "Error. Monto negativo: $monto "Error. Monto negativo: $monto"`;
+		#`bash glog.sh fepago ERROR "Error. Monto ingresado negativo: $monto"`;
+		Bash( './glog.sh', 'fepago', 'ERROR', 'Monto ingresado negativo: $monto' );
 
 		exit 1;
 	}
@@ -309,7 +334,8 @@ sub validarMonto(){
 
 	print "Formato monto no valido: $monto\n";
 	print "Formato monto valido: numero.2decimales (ej. 54.00)\n";
-	`bash glog.sh fepago ERROR "Error. Monto invalida: $monto"`;
+	#`bash glog.sh fepago ERROR "Error. Formato monto ingresado invalido: $monto"`;
+	Bash( './glog.sh', 'fepago', 'ERROR', 'Formato monto ingresado invalido: $monto' );
 
 	exit 1;	
 }
@@ -322,7 +348,8 @@ sub inicializarLog{
 	my(@args);
 	$textIni="Inicio de fepago $cadena";
 	chomp($textIni);
-	`bash glog.sh fepago ERROR "$textIni"`;
+	#`bash glog.sh fepago ERROR "$textIni"`;
+	Bash( './glog.sh', 'fepago', 'ERROR', '$textIni' );
 
     return $result;
 }
@@ -395,6 +422,14 @@ sub fechaEsMenor{
 
 sub determinarComprometidos{
 
+      #my($r);
+      #$r=0;
+
+      #Vacio los arreglos
+      @comprometidos = ();
+      @regApagar = ();
+      @regPresu = ();
+
       #Abrir archivo Facturas a Pagar
       open ( ENT, "<$entrada" ) or die "No se pudo abrir el archivo $entrada : $!";
       while ( $registro = <ENT> ){
@@ -407,16 +442,19 @@ sub determinarComprometidos{
 	$montoapagar = $apagar[3];
 	$fechaapagar = $apagar[2];
 
-	#printf "modo barrido = $modobarr\n";
+	#print "modo barrido = $modobarr\n";
 
 	if ( $modobarr eq "-bi" ){
 	  if ( ($montoapagar > $montodesde) && ($montoapagar < $montohasta ) ){
 	      #Esta en el rango pedido, me fijo si esta comprometido
+	      #print "Estado $apagar[1]\n";
 	      if ( $apagar[1] eq "A PAGAR" ){
+		#print "Monto $apagar[3]\n";
 		if (&checkDisponibilidad($apagar[3])){ #Hay disponibilidad
 		  #print "registro comprometido\n";
 		  #Tengo que setear como LIBERADA
 		  $apagar[1] = "LIBERADA";
+		  #print "Estado $apagar[1]\n";
 		  $registro = join(";",@apagar);  
 		  push (@comprometidos, $registro);
 		  push (@regApagar, $registro);
@@ -426,6 +464,8 @@ sub determinarComprometidos{
 		  &actualizarDisponibilidad($apagar[3]);    	
 		} else { #No hay disponibilidad
 		    #Siguen como A PAGAR
+		    #$r++;
+		    #print "r = $r\n";
 		    push (@comprometidos, $registro);
 		    push (@regApagar, $registro);
 		  }
@@ -555,7 +595,7 @@ while ($modoejec ne "-q"){
     
     &backupArchivo($entrada);
     &backupArchivo($presupuesto);
-    &mostrarRegistrosAgrabar;
+    #&mostrarRegistrosAgrabar;
     &generarArchivoApagar;
     &generarArchivoPresu;
   }
