@@ -1,9 +1,10 @@
+#!/bin/bash
+
 # File:					Glog.sh
 # Creation:				16.09.2010
 # Last modification:			07.10.2010
 
 
-#!/bin/bash
 
 # #############################################
 # Muestra el Help y termina.
@@ -22,7 +23,6 @@ function Help {
 
 # ####################################################################
 # Valido y obtengo los Argumentos del script
-
 # Valida la cantidad de argumentos
 if [ $# -ne 3 ]
 then
@@ -46,7 +46,7 @@ case "$2" in
 	warn   | Warn   | WARN  )	logType="WARN";  ;;
 	error  | Error  | ERROR )	logType="ERRO";  ;;
 	Serror | SError | SERROR)	logType="SEVE";  ;;
-	*)	logHelpExit="3"; Help; ;;
+	*) logHelpExit="3"; Help; ;;
 
 esac;
 
