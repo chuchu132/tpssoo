@@ -277,7 +277,7 @@ sub pedirParametros{
 	}
 	else {
 	  print "Debe ingresar un modo de ejecucion valido (-ms,-ma o -q para terminar)\n";
-	  #exit 0;
+	  exit 1;
 	} 
 
 	if (($param[1] eq "-bf") or ($param[1] eq "-bi") or ($param[1] eq "-bfi")){
@@ -295,13 +295,13 @@ sub pedirParametros{
 	  if ($modobarr eq "-bfi"){
 	    #tomo 3 parametros
 	    validarFecha ($fechadesde = $param[2]);
-	    validarFecha ($montodesde = $param[3]);
+	    validarMonto ($montodesde = $param[3]);
 	    validarMonto ($montohasta = $param[4]);
 	  }
 	}
 	elsif ( $param[0] ne "-q" ){
 	  print "Debe ingresar un modo de barrido valido (-bf,-bi o -bfi)\n";
-	  #exit 0;
+	  exit 1;
 	}
     
 	return 0;
@@ -355,8 +355,8 @@ sub inicializarLog{
 	my(@args);
 	$textIni="Inicio de fepago $cadena";
 	chomp($textIni);
-	#Bash( "./glog.sh fepago ERROR \"$textIni\"" );
-	`bash ./glog.sh fepago ERROR "$textIni"`;
+	#Bash( "./glog.sh fepago INFO \"$textIni\"" );
+	`bash ./glog.sh fepago INFO "$textIni"`;
     return $result;
 }
 
