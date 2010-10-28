@@ -5,6 +5,7 @@ $FALSE = 0;
 
 #Clave: FUENTE => Valor: monto disponible
 %fuentes;
+%fuenteModificada;
 #Cada elemento es un registro completo APAGAR
 @comprometidos;
 #Clave: CAE => Valor: TRUE|FALSE
@@ -99,7 +100,7 @@ sub leerPresupuesto{
 	#Cargo el hash %fuentes
 	@campos=split(";",$linea);
 	$fuentes{$campos[0]}= $campos[1];
-
+	$fuenteModificada{$campos[0]} = $campos[3];
 	#print "$campos[0], $campos[1]\n";
   }
 
@@ -125,7 +126,7 @@ sub mostrarPresupuesto{
 	}
 
 	#se guardan indistintamente para -ms o -ma, solo para -ma se persisten
-	$nuevaLinea = $campos[0].";".$fuentes{$campos[0]}.";".$campos[2].";".$campos[3]."\n";
+	$nuevaLinea = $campos[0].";".$fuentes{$campos[0]}.";".$campos[2].";".$fuenteModificada{$campos[0]}."\n";
 	chomp($nuevaLinea);
 	push (@regPresu, $nuevaLinea);
     }
@@ -203,7 +204,7 @@ sub actualizarDisponibilidad{
     $monto = $_[0];
     $fuente= &getFuente($monto);
     $fuentes{$fuente} -= $monto;
-
+    $fuenteModificada{$fuente} = $ENV{'USER'};
     return 0;
 }
 
