@@ -8,18 +8,18 @@ then
 
 	if [ $# -ne 1 -o "$1" != "--help" -a "$1" != "--HELP" -a "$1" != "-h" ]
 	then
-		echo "Error: Wrong arguments. Please review the help (glog.sh --help).";
+		echo "Error: Argumentos erroneos. Por favor revise la ayuda (glog.sh --help)."
 		exit 1;
 	fi
 
-	echo "Usage: glog.sh log type message"
-	echo " log		Logs name. The file will be at \"\$grupo/comandos/log/logArgument.log\"";
-	echo " message	Message to be logged."
-	echo " type		Type of message log:";
-	echo "			info   or INFO   means an informative message";
-	echo "			warn   or WARN   means an warning message";
-	echo "			error  or ERROR  means an error message";
-	echo "			serror or SERROR means an severege message"
+	echo "Uso: glog.sh log tipo mensaje";
+	echo " log		Nombre del archivo del log.";
+	echo " mensaje	Mensaje a registrar.";
+	echo " tipo		Tipo de mensaje. Los \"tipos\" posibles son:";
+	echo "			info   o INFO    mensaje informativo.";
+	echo "			warn   o WARN    mensaje de advertencia.";
+	echo "			error  o ERROR   mensaje de error.";
+	echo "			serror o SERROR  mensaje de error severo.";
 
 	exit 0;
 fi
@@ -36,7 +36,7 @@ case "$2" in
 	error  | Error  | ERROR )	logType="ERRO";  ;;
 	Serror | SError | SERROR)	logType="SEVE";  ;;
 	*) 
-		echo "Error: Wrong argument. Argument ($2) Position (2). Please review the help (glog.sh --help)."; 
+		echo "Error: Argumento erroneo ($2) en la posicion (2). Por favor revise la ayuda (glog.sh --help)";
 		exit 5;
 	;;
 
@@ -54,7 +54,7 @@ then
 	# Verifico que pueda escribir en el directorio...
 	if [ ! -w "${logPath}" ]
 	then
-		echo "Error: Don't have write permissions on the folder \"${logPath}\"."
+		echo "Error: No tiene permisos de escritura en la carpeta \"${logPath}\".";
 		exit 10
 	fi
 
@@ -63,7 +63,7 @@ else
 	# Verifico que pueda escribir en el directorio padre...
 	if [ ! -w "${grupo:-$PWD}" ]
 	then
-		echo "Error: Don't have permissions to create the folder \"${logPath}\"."
+		echo "Error: No tiene permisos para crear la carpeta \"${logPath}\".";
 		exit 20
 	fi
 
@@ -85,7 +85,7 @@ then
 	# Verifico que pueda escribir el log...
 	if [ ! -w "${logName}" ]
 	then
-		echo "Error: Don't have write permissions on the log \"${logName}\"."
+		echo "Error: No tiene permisos de escritura en el log \"${logName}\"."
 		exit 11
 	fi
 
@@ -97,13 +97,13 @@ then
 	if [ $logSizeWillBe -gt $logMaxSize  ]
 	then
 
-		echo "Log<$logFile> Size exceeded (${logMaxSize} b)."
+		echo "Log<$logFile> Tamaño de log excedido (tamaño maximo ${logMaxSize} b)."
 		logSaveLast=${GLOG_LAST:-"15"}
 
 		if [ $logSaveLast -gt 0 ]
 		then
 
-			echo "Log<${logFile}> ${logSaveLast} records will be saved." 
+			echo "Log<${logFile}> Se guardaran los ultimos ${logSaveLast} registros." 
 			tail -$logSaveLast $logName > "${logName}.tmp"
 			mv --force "${logName}.tmp" "${logName}"
 
