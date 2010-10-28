@@ -253,13 +253,13 @@ sub mostrarRegistrosAgrabar{
 
 sub backupArchivo{
        my(@num,@rutas,$ultima_version,$cmd,$archivo);
-       @num=`ls $_[1] | sed \'s/.*\\.\\(.*\\)\$/\\1/g\' | sort -n`;
+       @num=`ls "$_[1]" | sed \'s/.*\\.\\(.*\\)\$/\\1/g\' | sort -n`;
        $ultima_version= $num[-1];
        $ultima_version++;
        @rutas=split('/',$_[0]);
        $archivo= $rutas[-1];
         
-       $cmd = "cp $_[0] $_[1]$archivo\.$ultima_version";
+       $cmd = "cp \"$_[0]\" \"$_[1]$archivo\.$ultima_version\"";
        #print "$_[0] $_[1]$archivo\.$ultima_version\n"; 
        system($cmd);
 }
