@@ -121,6 +121,7 @@ sub mostrarPresupuesto{
 	chomp($linea);
 	@campos=split(";",$linea);
 	print	$campos[0]." - ".$campos[1]." - ".$fuentes{$campos[0]}."\n";
+	#print	$campos[0]." - ".$campos[1]." - ".$fuenteModificada{$campos[0]}."\n";
 	
 	#Actualizo fecha
 	if ($campos[1] ne $fuentes{$campos[0]}){
