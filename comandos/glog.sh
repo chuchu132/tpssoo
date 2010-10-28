@@ -44,7 +44,8 @@ esac;
 
 # ###################################################################
 # Verifico si debo crear la carpeta donde se guardan los logs.
-logPath="${grupo:-"$PWD"}/logs"
+[ -z "$grupo" ] && logPath="${PWD}/log";
+[ -n "$grupo" ] && logPath="${grupo}/comandos/log";
 
 # Verifico que exista el directorio
 if [ -d "${logPath}" ]

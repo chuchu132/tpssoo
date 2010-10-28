@@ -33,12 +33,23 @@ $backupPresupuesto = "$ENV{'grupo'}/prin/old/";
 
 sub Bash
 {
+
+print "--------------------------------\n";
+print "argumentos (@_)\n";
+
 	$value=`bash -c "@_" 2>/dev/null`;
+
+print "salida ($?)\n";
+
 	if ( $? != 0 )
 	{
 		print "No se puede ejecutar \"@_\".";
+print "--------------------------------\n";
 		exit 1;
 	}
+
+print "ejecuto bien(?)\n";
+print "--------------------------------\n";
 
 	chomp( $value );
 	return $value;
