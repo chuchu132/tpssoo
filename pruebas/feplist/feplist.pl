@@ -62,14 +62,14 @@ sub Params
 {
 	# Declaracion de variables locales
 	local( %params, $i, $argument, $value );
-	local( $fileIndex, $allIndex, $file   );
+	local( $fileIndex, $allIndex, $file );
 	local( $lower, $upper, $index, $defName );
 
 	# Verifico si se esta llamando al Help o que al menos tenga 1 param
 	($#ARGV == -1 || $ARGV[0] eq '-h' || $ARGV[0] eq '--help') && Use( );
 
 	# El primer parametro es fijo: $TOPAY, $FREED o $BUDGET
-	($ARGV[0] ne $TOPAY) && ($ARGV[0] ne $FREED) && ($ARGV[0] ne $BUDGET) && (Use( "Invalid argument type ($ARGV[0])" ));
+	($ARGV[0] ne $TOPAY) && ($ARGV[0] ne $FREED) && ($ARGV[0] ne $BUDGET) && (Error( "Argumento de tipo invalido ($ARGV[0])." ));
 
 	# Cargo el tipo de listado
 	$params{$TYPE}=$ARGV[0];
@@ -93,7 +93,7 @@ sub Params
 			( $option, $file ) = split( ':', $value );
 
 			# Verifico que sea correcto el valor de la opcion
-			($option ne $OUTALL) && ($option ne $OUTDSP) && ($option ne $OUTFLE) && (Use( "Invalid output value ($option)" ));
+			($option ne $OUTALL) && ($option ne $OUTDSP) && ($option ne $OUTFLE) && (Error( "Argumento de salida invalido ($option)." ));
 
 			# Cargo la opcion a la variable de parametros
 			$params{$OUTPUT}=$option;
@@ -110,28 +110,28 @@ sub Params
 			else
 			{
 				# Verifico que no haga o=display:/home/XYX/a
-				($file) && (Use( "Invalid output value ($file). Try option \"-o=all:$file\"." ));
+				($file) && (Error( "Argumento de salida invalido ($file). Intente con la opcion \"-o=all:$file\"." ));
 			}
 		}
 		elsif ( $argument eq $MONEY )
 		{
 			# Listado Presupuesto no tiene esta opcion
-			($params{$TYPE} eq $BUDGET) && (Use("Budget list only permits output option"));
+			($params{$TYPE} eq $BUDGET) && (Error("El listado de presupuesto no utiliza el filtrado por importe ($argument)."));
 
 			# Verifico que este el operador ':'
 			$index = index( $value, ':', 0 );
-			( $index == -1 ) && (Use( "No reference operator (:) in param ($value)" ));
+			( $index == -1 ) && (Error( "Falta el operador de referencia (:) en el parametro ($value)." ));
 
 			# Valido el formato y valores.
-			($value =~ m/\[(?:[0-9]{1,}\.[0-9]{2})?\:(?:[0-9]{1,}\.[0-9]{2})?\]/) || (Use( "Invalid format. Check money parameter ($value). Money format XXXX.xx" ));
+			($value =~ m/\[(?:[0-9]{1,}\.[0-9]{2})?\:(?:[0-9]{1,}\.[0-9]{2})?\]/) || (Error( "Formato de importe invalido. Formato \"XXX.xx\".\nVerifique el parametro ($value)." ));
 
 			# Separo los importes y verifico que exista al menos un valor de rango
 			$lower = substr( $value, 1, $index - 1 );
 			$upper = substr( $value, $index + 1, length( $value ) - $index - 2 );
-			($lower eq '') && ($upper eq '') && (Use( "Must define a low and/or max money value.\nEj: Lower than 10.00: m=[10.00:]\nEj: Grater than 10.00: m=[:10.00]\nEj: Between 10.00 and 20.00 m=[10.00:20.00]" ));
-			
+			($lower eq '') && ($upper eq '') && (Error( "Debe definir un minimo y/o maximo importe para el filtrado. Verifique el parametro ($argument).\nEj: Menores o iguales a 10.00: m=[10.00:]\nEj: Mayores o iguales a 10.00: m=[:10.00]\nEj: Entre 10.00 y 20.00 m=[10.00:20.00]" ));
+
 			# Valido el rango
-			($lower ne '') && ($upper ne '') &&	($lower > $upper) && (Use( "Invalid range. Check money parameter ($value)" ));
+			($lower ne '') && ($upper ne '') &&	($lower > $upper) && (Error( "Rango de importes invalidos. Verifique los valores ($value) del parametro ($argument).\nEl importe minimo ($lower) debe ser igual o superior al maximo ($upper)." ));
 
 			# Ingreso los parametros
 			$params{$MONEY} = '1';
@@ -141,33 +141,35 @@ sub Params
 		elsif ( $argument eq $DATE )
 		{
 			# Listado Presupuesto no tiene esta opcion
-			($params{$TYPE} eq $BUDGET) && (Use("Budget list only permits output option"));
+			($params{$TYPE} eq $BUDGET) && (Error("El listado de presupuesto no utiliza el filtrado por fecha ($argument)."));
 
 			# Valido que este en el formato correcto
-			(!($value =~ m/\[(?:[12][0-9]{3}[01][0-9][0-3][0-9])?:(?:[12][0-9]{3}[01][0-9][0-3][0-9])?\]/)) && Use( "Invalid format. Check date parameter ($value). Date format yyyymmdd." );
+			(!($value =~ m/\[(?:[12][0-9]{3}[01][0-9][0-3][0-9])?:(?:[12][0-9]{3}[01][0-9][0-3][0-9])?\]/)) && Error( "Formato de fecha invalido. Formato \"aaammdd\". Verifique el parametro ($argument).\nEj: Entre las fechas 01-01-2010 y 31-01-2010 \"-d=[20100101:20100131]\"." ); 
 
 			# Separo los importes
 			$index = index ( $value, ':', 0 );
-			( $index == -1 ) && (Use( "No reference operator (:) in param ($value)" ));
 
 			# Separo las fechas y verifico que exista al menos un valor de rango
 			$lower = substr( $value, 1, $index - 1 );
 			$upper = substr( $value, $index + 1, length( $value ) - $index - 2 );
-			
+
+			# Verifico que no esten vacios
+			($lower eq '') && ($upper eq '') && (Error( "Debe ingresar una fecha de filtro. Formato \"aaaammdd\"." ));
+
 			# Valido el rango
-			($lower ne '') && ($upper ne '') &&	($lower > $upper) && (Use( "Must define a low and/or max date value.\nEj: Lower than 2010-10-01: m=[20101001:]\nEj: Grater than 2010-10-01: m=[:20101001]\nEj: Between 2010-10-01 and 2010-10-30 m=[20101001:20101030]" ));
+			($lower ne '') && ($upper ne '') &&	($lower > $upper) && (Error( "Rango de fechas invalidos. Verifique los valores ($value) del parametro ($argument).\nLa fecha minima ($lower) debe ser igual o superior a la maxima ($upper)." ));
 
 			# Valido que sea una fecha
 			if ( $lower ne '' )
 			{
 				$value = substr( $lower, 4, 2 ) . '/' . substr( $lower, 6, 2 ) . '/' . substr( $lower, 0, 4 ) ;
-				(`date --date "$value" 2>/dev/null`) || (Use( "Invalid lower date ($lower)"));
+				(`date --date "$value" 2>/dev/null`) || (Error( "Fecha invalida. Verifique el parametro ($argument) y su valor ($lower)."));
 			}
 
 			if ( $upper ne '' )
 			{
 				$value = substr( $upper, 4, 2 ) . '/' . substr( $upper, 6, 2 ) . '/' . substr( $upper, 0, 4 ) ;
-				(`date --date "$value" 2>/dev/null`) || (Use( "Invalid upper date ($upper)"));
+				(`date --date "$value" 2>/dev/null`) || (Error( "Fecha invalida. Verifique el parametro ($argument) y su valor ($upper)."));
 			}
 
 			# Ingreso los parametros
@@ -177,7 +179,8 @@ sub Params
 		}
 		else
 		{
-			Use( "Invalid Argument ($argument)." );
+			++$i;
+			Error( "Argumento invalido ($argument) en la posicion ($i)." );
 		}
 	}
 
@@ -206,7 +209,7 @@ sub Data
 	( $type eq $BUDGET ) && ( return DataBudget( %params ) );
 
 	# No existe el "tipo": ERROR DE PROGRAMACION: "Params" lo tiene que detectar.
-	Debug ( 'Invalid Type: It shouldn\'t reach this point. Check Params Function.' );
+	Debug( 'Tipo de listado invalido. No deberia alcanzar este punto. Verificar la funcion Params.' ); 
 }
 
 
@@ -228,7 +231,7 @@ sub PrintFormat
 	( $type eq $BUDGET ) && (return "%15s %12.2f %10s %-s");
 
 	# No existe el "tipo": ERROR DE PROGRAMACION: "Params" lo tiene que detectar.
-	Debug ( 'Invalid Type: It shouldn\'t reach this point. Check Params Function.' );
+	Debug( 'Tipo de listado invalido. No deberia alcanzar este punto. Verificar la funcion Params.' ); 
 }
 
 # -----------------------------------------------------------------------------
@@ -236,7 +239,7 @@ sub PrintFormat
 sub Title 
 {
 	# Declaracion de variables locales
-	local( %params, $type, $time );
+	local( %params, $type, $time, $format );
 	local( $lo, $up, $money, $date, $filter );
 
 	# Paso los Argumentos a Variables para que
@@ -276,12 +279,14 @@ sub Title
 	($money eq '') && ($date ne '') && ($filter="FILTRO: $date" );
 	
 	# Dirijo, segun el tipo, a la funcion especifica para tomar titulo
-	($type eq $TOPAY ) && (return sprintf( "%-20s  %-50s  %15s\n" . '+'x110, 'FACTURAS A PAGAR'  , ($filter) || (' 'x70), $time ) );
-	($type eq $FREED ) && (return sprintf( "%-20s  %-50s  %15s\n" . '+'x110, 'FACTURAS LIBERADAS', ($filter) || (' 'x70), $time ) );
-	($type eq $BUDGET) && (return sprintf( "%-15s  %15s\n" . '+'x65, 'PRESUPUESTO' . ' 'x36, $time ) );
+	$format = '+'x110 . "\n%-20s  %-50s  %15s\n" .'+'x110 . "\n%11s  %s  %4s  %8s  %10s  %10s  %12s  %12s  %12s  %12s\n" . '-'x110;
+
+	($type eq $TOPAY ) && (return sprintf( $format, 'FACTURAS A PAGAR', ($filter) || (' 'x70), $time,'CUIT PROVEE','T','PDV','COMPRO','VENCE','CAE', 'NGRAV', 'GRAV', 'IVA', 'TOTAL' ) );
+	($type eq $FREED ) && (return sprintf( $format, 'FACTURAS LIBERADAS', ($filter) || (' 'x70), $time,'CUIT PROVEE','T','PDV','COMPRO','VENCE','CAE', 'NGRAV', 'GRAV', 'IVA', 'TOTAL' ) );
+	($type eq $BUDGET) && (return sprintf( '+'x65 . "\n%-15s  %15s\n" . '+'x65 . "\n%15s %12s %10s %-25s\n" . '-'x65, 'PRESUPUESTO' . ' 'x36, $time, 'FUENTE', 'IMPORTE', 'ULTIMA', 'USUARIO' ) );
 
 	# No existe el "tipo": ERROR DE PROGRAMACION: "Params" lo tiene que detectar.
-	Debug ( 'Invalid Type: It shouldn\'t reach this point. Check Params Function.' );
+	Debug( 'Tipo de listado invalido. No deberia alcanzar este punto. Verificar la funcion Params.' ); 
 }
 
 # -----------------------------------------------------------------------------
@@ -309,11 +314,11 @@ sub Print
 	$toScreen	= ($type eq $OUTDSP || $type eq $OUTALL) ? 1 : 0;
 
 	# Abro el archivo correspondiente
-	( $toFile ) && (( open( FILE, "+>> $params{$OUTPATH}" )) || FatalError( "IO: Couldn\'t open file \"$params{$OUTPATH}\"" ));
+	( $toFile ) && (( open( FILE, "+>> $params{$OUTPATH}" )) || FatalError( "IO: No pudo abrir el archivo \"$params{$OUTPATH}\"" ));
 
 	# Imprimo el titulo del listado
 	($toScreen) && ( print ( "$title\n" ) );
-	( $toFile ) && ((print (FILE "$title\n")) || FatalError( "IO: Couldn\'t write to file \"$params{$OUTPATH}\"" ));
+	( $toFile ) && ((print (FILE "$title\n")) || FatalError( "IO: No pudo escribir en el archivo \"$params{$OUTPATH}\"" ));
 
 	# Imprimo el cuerpo del listado
 	foreach $dat (@data)
@@ -322,11 +327,11 @@ sub Print
 		$tmp = sprintf ( $format . "\n", @row );
 
 		($toScreen) && ( printf ( "$tmp" ) );
-		( $toFile ) && ((printf (FILE "$tmp" )) || FatalError( "IO: Couldn\'t write to file \"$params{$OUTPATH}\"" ));
+		( $toFile ) && ((printf (FILE "$tmp" )) || FatalError( "IO: No pudo escribir en el archivo \"$params{$OUTPATH}\"" ));
 	}
 
 	# Dejo una linea vacia al final del archivo para que quede legible
-	($toFile) && ((print (FILE ":~\n" )) || FatalError( "IO: Couldn\'t write to file \"$params{$OUTPATH}\"" ));
+	($toFile) && ((print (FILE ":~\n" )) || FatalError( "IO: No pudo escribir en el archivo \"$params{$OUTPATH}\"" ));
 
 	# Cierro el archivo
 	( $toFile ) && ( close( FILE ) );
@@ -351,7 +356,7 @@ sub DataBudget
 	$pathFile = "$BUDGETDIR/$BUDGETNAME.txt";
 
 	# Abro el archivo en solo lectura.
-	(open( FILE, "< $pathFile" )) || (FatalError( "IO: Couldn\'t open \"$pathFile\"" ));
+	(open( FILE, "< $pathFile" )) || (FatalError( "IO: No pudo escribir en el archivo \"$pathFile\"" ));
 
 	# Seteo los rangos de valores.
 	$ranges{'11'} = "<   1000";
@@ -448,7 +453,7 @@ sub FilterBills
 	$tmp="$BILLDIR/$TOPAYNAME.txt";
 
 	# Abro archivo
-	(open( FILE, "< $tmp")) || (FatalError( "IO: Couldn\'t open \"$tmp\"" ));
+	(open( FILE, "< $tmp")) || (FatalError( "IO: No pudo abrir el archivo \"$tmp\"" ));
 	
 	# Filtrado segun parametros
 	while ( $row=<FILE> )
@@ -469,7 +474,7 @@ sub FilterBills
 			($mLo ne '' && $mUp ne '') && (($reg[3] < $mLo) || ($reg[3] > $mUp)) && (next);
 			($mLo ne '' && $mUp eq '') && ($reg[3] > $mLo) && (next);
 			($mLo eq '' && $mUp ne '') && ($reg[3] < $mUp) && (next);
-			($mLo eq '' && $mUp eq '') && Debug ( 'Invalid Range: It shouldn\'t reach this point. Check Params Function.' )
+			($mLo eq '' && $mUp eq '') && Debug ( 'Rango invalido de importe. No deberia alcanzar este punto. Verifique la funcion Params.' )
 		}
 
 		# Si esta el parametro "Date" filtro la fecha...
@@ -478,7 +483,7 @@ sub FilterBills
 			($dLo ne '' && $dUp ne '') && (($tmp < $dLo) || ($tmp > $dUp)) && (next);
 			($dLo ne '' && $dUp eq '') && ($tmp > $dLo) && (next);
 			($dLo eq '' && $dUp ne '') && ($tmp < $dUp) && (next);
-			($dLo eq '' && $dUp eq '') && Debug ( 'Invalid Range: It shouldn\'t reach this point. Check Params Function.' )
+			($dLo eq '' && $dUp eq '') && Debug ( 'Rango invalido de fechas. No deberia alcanzar este punto. Verifique la funcion Params.' )
 		}
 
 		# Este registro cumple con los filtrados.
@@ -505,7 +510,7 @@ sub DetailBills
 		$tmp="$BILLACPDIR/$spl[1]";
 
 		# Tomo los datos de la cabecera
-		($bill=`head -1 "$tmp" 2>/dev/null`) || (FatalError( "IO: Couldn\'t open \"$tmp\"" ));
+		($bill=`head -1 "$tmp" 2>/dev/null`) || (FatalError( "IO: No pudo abrir el archivo \"$tmp\"" ));
 
 		# Agrego la factura a la coleccion de facturas
 		push( @data, $bill );
@@ -567,10 +572,10 @@ sub CreateReport
 		# Verifico si cambio el año
 		if( $cYear != $rYear )
 		{
-			push( @data, sprintf( $format, "Sub. Day   "  , $day{'taxed'}  , $day{'iva'}  , $day{'tributed'}  , $day{'total'} ) );
-			push( @data, sprintf( $format, "Sub. Week  " , $week{'taxed'} , $week{'iva'} , $week{'tributed'} , $week{'total'} ) );
-			push( @data, sprintf( $format, "Sub. Month ", $month{'taxed'}, $month{'iva'}, $month{'tributed'}, $month{'total'} ) );
-			push( @data, sprintf( $format, "Sub. Year  " , $year{'taxed'} , $year{'iva'} , $year{'tributed'} , $year{'total'} ) );
+			push( @data, sprintf( $format, "Sub. Dia   "  , $day{'taxed'}  , $day{'iva'}  , $day{'tributed'}  , $day{'total'} ) );
+			push( @data, sprintf( $format, "Sub. Sem   " , $week{'taxed'} , $week{'iva'} , $week{'tributed'} , $week{'total'} ) );
+			push( @data, sprintf( $format, "Sub. Mes   ", $month{'taxed'}, $month{'iva'}, $month{'tributed'}, $month{'total'} ) );
+			push( @data, sprintf( $format, "Sub. Anio  " , $year{'taxed'} , $year{'iva'} , $year{'tributed'} , $year{'total'} ) );
 			push( @data, $bill );
 
 			# Contadores a los valores del registro
@@ -591,9 +596,9 @@ sub CreateReport
 		# Verifico si cambio el mes
 		if ( $cMonth != $rMonth )
 		{
-			push( @data, sprintf( $format, "Sub. Day   "  , $day{'taxed'}  , $day{'iva'}  , $day{'tributed'}  , $day{'total'} ) );
-			push( @data, sprintf( $format, "Sub. Week  " , $week{'taxed'} , $week{'iva'} , $week{'tributed'} , $week{'total'} ) );
-			push( @data, sprintf( $format, "Sub. Month ", $month{'taxed'}, $month{'iva'}, $month{'tributed'}, $month{'total'} ) );
+			push( @data, sprintf( $format, "Sub. Dia   "  , $day{'taxed'}  , $day{'iva'}  , $day{'tributed'}  , $day{'total'} ) );
+			push( @data, sprintf( $format, "Sub. Sem   " , $week{'taxed'} , $week{'iva'} , $week{'tributed'} , $week{'total'} ) );
+			push( @data, sprintf( $format, "Sub. Mes   ", $month{'taxed'}, $month{'iva'}, $month{'tributed'}, $month{'total'} ) );
 			push( @data, $bill );
 
 			# Contadores a los valores del registro
@@ -619,8 +624,8 @@ sub CreateReport
 		# verifico si cambio la semana
 		if ( $cWeek != $rWeek )
 		{
-			push( @data, sprintf( $format, "Sub. Day   "  , $day{'taxed'}  , $day{'iva'}  , $day{'tributed'}  , $day{'total'} ) );
-			push( @data, sprintf( $format, "Sub. Week  " , $week{'taxed'} , $week{'iva'} , $week{'tributed'} , $week{'total'} ) );
+			push( @data, sprintf( $format, "Sub. Dia   "  , $day{'taxed'}  , $day{'iva'}  , $day{'tributed'}  , $day{'total'} ) );
+			push( @data, sprintf( $format, "Sub. Sem   " , $week{'taxed'} , $week{'iva'} , $week{'tributed'} , $week{'total'} ) );
 			push( @data, $bill );
 
 			# Contadores a los valores del registro
@@ -645,7 +650,7 @@ sub CreateReport
 		# Verifico si cambio el dia
 		if ( $cDay != $rDay )
 		{
-			push( @data, sprintf( $format, "Sub. Day   "  , $day{'taxed'}  , $day{'iva'}  , $day{'tributed'}  , $day{'total'} ) );
+			push( @data, sprintf( $format, "Sub. Dia   "  , $day{'taxed'}  , $day{'iva'}  , $day{'tributed'}  , $day{'total'} ) );
 			push( @data, $bill );
 
 			# Contadores a los valores del registro
@@ -677,10 +682,10 @@ sub CreateReport
 	}
 
 	# El ultimo	registro... y Totales...
-	push( @data, sprintf( $format, "Sub. Day   "  , $day{'taxed'}  , $day{'iva'}  , $day{'tributed'}  , $day{'total'} ) );
-	push( @data, sprintf( $format, "Sub. Week  " , $week{'taxed'} , $week{'iva'} , $week{'tributed'} , $week{'total'} ) );
-	push( @data, sprintf( $format, "Sub. Month ", $month{'taxed'}, $month{'iva'}, $month{'tributed'}, $month{'total'} ) );
-	push( @data, sprintf( $format, "Sub. Year  " , $year{'taxed'} , $year{'iva'} , $year{'tributed'} , $year{'total'} ) );
+	push( @data, sprintf( $format, "Sub. Dia   "  , $day{'taxed'}  , $day{'iva'}  , $day{'tributed'}  , $day{'total'} ) );
+	push( @data, sprintf( $format, "Sub. Sem   " , $week{'taxed'} , $week{'iva'} , $week{'tributed'} , $week{'total'} ) );
+	push( @data, sprintf( $format, "Sub. Mes   ", $month{'taxed'}, $month{'iva'}, $month{'tributed'}, $month{'total'} ) );
+	push( @data, sprintf( $format, "Sub. Anio  " , $year{'taxed'} , $year{'iva'} , $year{'tributed'} , $year{'total'} ) );
 	push( @data, sprintf( $format, "Total      " , $taxed, $iva, $trib , $tot ) );
 
 	return @data;
@@ -694,24 +699,24 @@ sub CreateReport
 sub Use 
 {
 	(scalar(@_) > 0) && (print "@_\n");
-	print "Useage: feplist.pl LIST_TYPE [OPTIONS]\n";
-	print "Prints the list requested according to the file associated.\n\n";
-	print "List types:\n";
-	print " -b     Budget list. Related to $BUDGETNAME.txt file.\n";
-	print " -fp    Bills to pay list. Related to $TOPAYNAME.txt file.\n";
-	print " -ff    Bills released list. Related to $TOPAYNAME.txt file.\n\n";
-	print "Options:\n";
-	print "  -o=OUTPUT[:PATH]   OUTPUT options:\n";
-	print "      + display: prints on the display (default). The PATH opcion is no available.\n";
-	print "      + file:    prints on the file \$GRUPO$OUTDIRD/($TOPAYNAME|$FREEDNAME|$BUDGETNAME).lst\n";
-	print "                 accoring to the LIST_TYPE. It can be overriden with the option PATH.\n";
-	print "      + all:     prints on the display and on a file. It can be combined with th PATH option.\n\n";
-	print "  -m=[loAmount:hiAmount]  Listings filters for the Bills in the range between.\n";
-	print "                          loAmount and hiAmount. The numeric format is XXXX.xx\n";
-	print "                          The parameters loAmount or hiAmount can be omited.\n\n";
-	print "  -d=[loDate:hiDate]  Listings filters for the Bills in the range between loDate and hiDate.\n";
-	print "                      The date format is yyyymmddd.The parameters loDate or hiDate can be omited.\n\n";
-	print "Examples:\n";
+	print "Uso: feplist.pl TIPO [OPCIONES]\n";
+	print "Imprime listados de acuerdo al parametro TIPO.\n";
+	print "TIPOs de listados:\n";
+	print " -b     Listado de presupuesto.\n";
+	print " -fp    Listado de facturas a pagar.\n";
+	print " -ff    Listado de facturas liberadas.\n\n";
+	print "OPCIONES:\n";
+	print " -o=SALIDA[:RUTA]   Opciones de SALIDA:\n";
+	print "    + display  Muestra el listado por pantalla (por defecto). La opcion RUTA no es valida.\n";
+	print "    + file     Escribe el listado en el archivo \$grupo/facturas/listados/($TOPAYNAME|$FREEDNAME|$BUDGETNAME).lst\n";
+	print "               segun el TIPO de listado. Puede elegir el archivo donde se escribira el listado usando\n";
+	print "               la opcion RUTA. Ej: -o=file:./carpeta/archivo_salida.\n";
+	print "    + all      Combina las opciones display y file. Puede utilizarle la opcion RUTA.\n\n";
+	print " -m=[impMin:impMax] Filtrado por importe de los listados de facturas. Formato de importe \"XXX.xx\".\n";
+	print "                    Permite el filtrado por importes \"menores a\", \"mayores a\" o \"entre importes\".\n\n";
+	print " -d=[fecMin:fecMax] Filtrado por fecha de los listados de facturas. Formato de fecha \"aaaammdd\".\n";
+	print "                    Permite el filtrado por fechas \"menores a\", \"mayores a\" o \"entre fechas\".\n\n";
+	print "Ejemplos:\n";
 	print ">./feplist.pl -b\n";
 	print ">./feplist.pl -b  -o=file:./budgetList\n";
 	print ">./feplist.pl -fp -m=[100.00:500.00] -o=all\n";
@@ -724,7 +729,7 @@ sub Use
 # -----------------------------------------------------------------------------
 sub FatalError
 {
-	printf ( "Error: @_.Check the \"grupo\" variable. It should be set to the correspondant directory. Then exported.\n" );
+	print ( "Error: @_.\nVerifique la variable de ambiente \"grupo\".\nDeberia estar configurada a la correspondiente carpeta.\nDespues exportada.\n" );
 	exit 3;
 }
 
@@ -735,3 +740,9 @@ sub Debug
 	exit 2;
 }
 
+# -----------------------------------------------------------------------------
+sub Error
+{
+	print ( "Error: @_\nPor favor revise la ayuda del comando (feplist.pl --help).\n" );
+	exit 5;
+}
