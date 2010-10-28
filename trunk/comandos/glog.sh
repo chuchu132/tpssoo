@@ -1,13 +1,16 @@
 #!/bin/bash
 
-# #############################################
-# Muestra el Help y termina.
-#
-# Nota: Utiliza la variable "logHelpExit" para
-#       salir del script. En caso de no existir
-#		termina la ejecucion con "0".
+# ####################################################################
+# Valido y obtengo los Argumentos del script
+# Valida la cantidad de argumentos
+if [ $# -ne 3 ]
+then
 
-function Help {
+	if [ $# -ne 1 -o "$1" != "--help" -a "$1" != "--HELP" -a "$1" != "-h" ]
+	then
+		echo "Error: Wrong arguments. Please review the help (glog.sh --help).";
+		exit 1;
+	fi
 
 	echo "Usage: glog.sh log type message"
 	echo " log		Logs name. The file will be at \"\$grupo/comandos/log/logArgument.log\"";
@@ -18,22 +21,7 @@ function Help {
 	echo "			error  or ERROR  means an error message";
 	echo "			serror or SERROR means an severege message"
 
-	exit ${logHelpExit:-"0"}
-}
-
-# ####################################################################
-# Valido y obtengo los Argumentos del script
-# Valida la cantidad de argumentos
-if [ $# -ne 3 ]
-then
-
-	if [ $# -ne 1 -o "$1" != "--help" -a "$1" != "--HELP" ]
-	then
-		echo "Error: Wrong arguments. Please review the help below.";
-		logHelpExit="2"
-	fi
-	
-	Help
+	exit 0;
 fi
 
 # Obtengo los Argumentos con sus respectivos valores...
@@ -48,19 +36,15 @@ case "$2" in
 	error  | Error  | ERROR )	logType="ERRO";  ;;
 	Serror | SError | SERROR)	logType="SEVE";  ;;
 	*) 
-		echo "Error: Wrong argument. Argument ($2) Position (2)."; 
-		logHelpExit="3"; 
-		Help; 
+		echo "Error: Wrong argument. Argument ($2) Position (2). Please review the help (glog.sh --help)."; 
+		exit 5;
 	;;
 
 esac;
 
 # ###################################################################
 # Verifico si debo crear la carpeta donde se guardan los logs.
-#
-# Nota: Si la variable "GRUPO" no esta definida pone en el path el PWD
-
-logPath="${grupo:-$PWD}/comandos/log"
+logPath="${grupo:-"$PWD"}/logs"
 
 # Verifico que exista el directorio
 if [ -d "${logPath}" ]
@@ -137,4 +121,3 @@ logTime=$( date +"%Y/%m/%d %H:%M:%S" )
 # Escribo en el log
 echo "${logTime} - ${logType} - ${logMessage}" >> "${logName}"
 exit 0
-
