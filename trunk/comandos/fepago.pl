@@ -73,16 +73,15 @@ sub estaCorriendoFeprima{
 #########################
 
 sub initAmbiente{
-
+	
 	if ( ! $ENV{"INI_FEPINI"} )
 	{
-		my( @args );
+		my( @args,$text );
 
-		print 'No se ha inicializado el ambiente. Debe ejecutarse el comando fepini.sh previamente'. "\n";
-		$text="No se ha inicializado el ambiente";
-		chop($text);
-		Bash( "./glog.sh fepago ERROR \"$text\"" );
-
+		#print 'No se ha inicializado el ambiente. Debe ejecutarse el comando fepini.sh previamente'. "\n";
+		$text='No se ha inicializado el ambiente';
+		print $text."\n";
+		`bash ./glog.sh fepago ERROR "$text"`;
 		exit 1;
 	}
 		
@@ -319,7 +318,8 @@ sub validarFecha(){
 	if ( $? == 0){
 		print "Formato fecha invalido: $fecha\n";
 		print "Formato fecha valido: YYYY-MM-DD\n";
-		Bash( "./glog.sh fepago ERROR \"Formato de fecha ingresada invalido: $fecha\"" );
+		`bash ./glog.sh fepago ERROR "Formato de fecha ingresada invalido: $fecha "`;
+#		Bash( "./glog.sh fepago ERROR \"Formato de fecha ingresada invalido: $fecha\"" );
 		exit 1;
 	}	
 }
@@ -332,8 +332,8 @@ sub validarMonto(){
 	#print "monto a validar $monto\n";
 	if ($monto < 0){
 		print "El monto: $monto es negativo\n";
-		Bash( "./glog.sh fepago ERROR \"Monto ingresado negativo: $monto\"" );
-
+#		Bash( "./glog.sh fepago ERROR \"Monto ingresado negativo: $monto\"" );
+		`bash ./glog.sh fepago ERROR "Monto ingresado negativo: $monto"`;
 		exit 1;
 	}
 	if ($monto=~ /^[0-9]*\.[0-9][0-9]$/){
@@ -342,8 +342,8 @@ sub validarMonto(){
 
 	print "Formato monto no valido: $monto\n";
 	print "Formato monto valido: numero.2decimales (ej. 54.00)\n";
-	Bash( "./glog.sh fepago ERROR \"Formato monto ingresado invalido: $monto\"" );
-
+	#Bash( "./glog.sh fepago ERROR \"Formato monto ingresado invalido: $monto\"" );
+	`bash ./glog.sh fepago ERROR "Formato monto ingresado invalido: $monto"`;
 	exit 1;	
 }
 
@@ -355,8 +355,8 @@ sub inicializarLog{
 	my(@args);
 	$textIni="Inicio de fepago $cadena";
 	chomp($textIni);
-	Bash( "./glog.sh fepago ERROR \"$textIni\"" );
-
+	#Bash( "./glog.sh fepago ERROR \"$textIni\"" );
+	`bash ./glog.sh fepago ERROR "$textIni"`;
     return $result;
 }
 
