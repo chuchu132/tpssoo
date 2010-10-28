@@ -117,6 +117,10 @@ sub mostrarPresupuesto{
     my($FD,$linea,@campos,$nuevaLinea);
 
     open(FD,"<$presupuesto");
+
+    print "Estado del Presupuesto\n";
+    print "Fuente/P.Anterior/P.Actual\n";
+
     while($linea = <FD>){
 	chomp($linea);
 	@campos=split(";",$linea);
@@ -215,6 +219,8 @@ sub actualizarDisponibilidad{
 sub mostrarRegistrosComprometidos{
 
     my($registro,@campos);
+
+    print "Registros comprometidos:\n";
 
     foreach $registro (@comprometidos) {
 	@campos = split(";",$registro);
