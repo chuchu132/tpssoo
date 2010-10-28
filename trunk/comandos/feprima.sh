@@ -102,9 +102,10 @@ then
         	      glog.sh feprima ERROR "Fecha Invalida: ${array[4]} ; ${array[5]}"
                 fi
         fi
-fi
 else
 	glog.sh feprima ERROR "Cantidad de Campos Cabecera incorrecta: $cant_campos"
+fi
+
 IFS=$OIFS
 return 0; #invalido
 }
@@ -201,7 +202,7 @@ monto_es_valido(){
             return 1 #valido
         fi
     else
-	    glog.sh feprima ERROR "Monto mal calculado. Es $1 y debe ser $2"
+	    glog.sh feprima ERROR "Monto iva mal calculado. Es $1 y debe ser $MontoTemp"
         return 0 #invalido
     fi
 }
