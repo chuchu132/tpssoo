@@ -21,6 +21,8 @@ $montohasta;
 $fechalimite = "2050-12-31";
 $entrada = "$ENV{'grupo'}/facturas/apagar.txt";
 $presupuesto = "$ENV{'grupo'}/prin/presu.txt";
+$backupEntrada = "$ENV{'grupo'}/facturas/old/";
+$backupPresupuesto = "$ENV{'grupo'}/prin/old/";
 #$entrada = "apagar.txt";
 #$presupuesto = "presu.txt";
 #Registros a incluir en el nuevo apagar.txt
@@ -594,8 +596,8 @@ while ($modoejec ne "-q"){
 
   if ($modoejec eq "-ma"){ #Modo Actualizacion -> Debo persistir los cambios
     
-    &backupArchivo($entrada);
-    &backupArchivo($presupuesto);
+    &backupArchivo($entrada,$backupEntrada);
+    &backupArchivo($presupuesto,$backupPresupuesto);
     #&mostrarRegistrosAgrabar;
     &generarArchivoApagar;
     &generarArchivoPresu;
