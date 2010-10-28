@@ -43,6 +43,7 @@ then
         fi
 return 1
 fi
+glog.sh feprima ERROR "El campo Punto de Venta es invalido ( $1 ), los valores validos son :[0001,9998]"
 return  0 #invalido
 } 
 
@@ -60,6 +61,7 @@ then
         fi
 return 1
 fi
+glog.sh feprima ERROR "El Numero de comprobante es invalido ( $1 ), los valores validos son :[00000001,99999998]"
 return  0 #invalido
 } 
 
@@ -93,10 +95,16 @@ then
                 then
                                 IFS=$OIFS       
                                 return 1; # valido
-                        fi
+                 else
+		        	glog.sh feprima ERROR "Formato Importes incorrecto: ${array[6]} ; ${array[7]} ; ${array[8]} ; ${array[9]}"
+                   fi
+                  else
+        	      glog.sh feprima ERROR "Fecha Invalida: ${array[4]} ; ${array[5]}"
                 fi
         fi
 fi
+else
+	glog.sh feprima ERROR "Cantidad de Campos Cabecera incorrecta: $cant_campos"
 IFS=$OIFS
 return 0; #invalido
 }
@@ -169,6 +177,7 @@ validarCabecera(){
                         fi
                         fi
                 fi              
+                glog.sh feprima ERROR "CAE vencido: $fecha_cae"  
                 return 2        #       factura vencida
         fi
         return 1
@@ -186,11 +195,13 @@ monto_es_valido(){
     then
          if [ "$2" = "0.00" ]
          then
+        	 glog.sh feprima ERROR "Monto Invalido. No puede ser cero"
             return 0 #invalido
         else
             return 1 #valido
         fi
     else
+	    glog.sh feprima ERROR "Monto mal calculado. Es $1 y debe ser $2"
         return 0 #invalido
     fi
 }
@@ -274,6 +285,7 @@ IFS='
                                 return 1
                         fi
                 else
+		                glog.sh feprima ERROR "Formato Item invalido: $linea"
                         IFS=$OFS
                         return 1
                 fi
@@ -326,6 +338,7 @@ grabarRegistro(){
         fi
         local registro="${cae};A PAGAR;${vto};${monto}"
         echo $registro >> "$grupo/facturas/apagar.txt"
+        glog.sh feprima INFO "Se actualizo el archivo apagar.txt."
     return 0
 }
 
@@ -388,8 +401,8 @@ procesarArchivos(){
         cant_arch=`echo "$cant_arch - 1" | bc -l`
         echo "==================================================================="
         glog.sh feprima INFO "=============================================================="
-        echo "Inicio de Feprima: $cant_arch"
-        glog.sh feprima INFO "Inicio de Feprima: $cant_arch" 
+        echo "Inicio de Feprima: $cant_arch facturas a procesar"
+        glog.sh feprima INFO "Inicio de Feprima: $cant_arch facturas a procesar" 
         
         archivos=`ls "$RECIBIDOS"`
         for file in $archivos
