@@ -38,6 +38,7 @@ if [ `echo $1 | grep "^[0-9]\{4\}$"` ]
 then 
         if [ $1 = "0000" ] || [ $1 = "9999" ]
         then 
+	glog.sh feprima ERROR "El campo Punto de Venta es invalido ( $1 ), los valores validos son :[0001,9998]"
         return  0 #invalido
         fi
 return 1
@@ -54,6 +55,7 @@ if [ `echo $1 | grep "^[0-9]\{8\}$"` ]
 then 
         if [ $1 = "00000000" ] || [ $1 = "99999999" ]
         then 
+	glog.sh feprima ERROR "El Numero de comprobante es invalido ( $1 ), los valores validos son :[00000001,99999998]"
         return  0 #invalido
         fi
 return 1
@@ -179,6 +181,7 @@ validarCabecera(){
 ##################################################################
 monto_es_valido(){
         MontoTemp=`echo "$2 * $3 / 100" | bc -l | awk '{printf ("%.2f",$MontoTemp)}'`
+
    if [ $MontoTemp = $1 ]
     then
          if [ "$2" = "0.00" ]
@@ -218,8 +221,13 @@ validarFormatoItems(){
                 if [ `echo ${array[1]} | grep "^[0-9]*\.[0-9][0-9]$"` ] && [ `echo ${array[2]} | grep "^[0-9]*\.[0-9][0-9]$"` ] && [ `echo ${array[3]} | grep "^[0-9]*\.[0-9][0-9]$"` ]
                 then
                         res=1
-                fi      
-        fi
+                else
+		glog.sh feprima ERROR "Uno de los campos (${array[1]};${array[2]};${array[3]}) del registro item, es negativo o no es un numero o no tiene 2 decimales."		
+		fi      
+        else
+		glog.sh feprima ERROR "El registro item debe tener 4 campos y tiene: $cant_campos"
+	fi
+
         IFS=$OIFS
         return $res;
 }
@@ -293,7 +301,9 @@ IFS='
         if [ "$total" = "`head -n 1 "$1" | cut -d ';' -f 10`" ]
         then
                 return 0        # Los montos concuerdan con el encabezado
-        fi
+        else
+	   glog.sh feprima ERROR "Se calculo un Monto Total de \$ $total y el registro cabecera dice \$ `head -n 1 "$1" | cut -d ';' -f 10` "
+	fi
     fi
     fi
     fi
