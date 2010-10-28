@@ -36,7 +36,8 @@ sub Bash
 	$value=`bash -c "@_" 2>/dev/null`;
 	if ( $? != 0 )
 	{
-		return 0;
+		print "No se puede ejecutar \"@_\".";
+		exit 1;
 	}
 
 	chomp( $value );
@@ -80,8 +81,7 @@ sub initAmbiente{
 		print 'No se ha inicializado el ambiente. Debe ejecutarse el comando fepini.sh previamente'. "\n";
 		$text="No se ha inicializado el ambiente";
 		chop($text);
-		#`bash ./glog.sh fepago SERROR "$text"`;
-		Bash( './glog.sh', 'fepago', 'ERROR', '$text' );
+		Bash( "./glog.sh fepago ERROR \"$text\"" );
 
 		exit 1;
 	}
@@ -184,7 +184,7 @@ sub checkDisponibilidad{
     #print "Verificando disponibilidad\n";
     $monto = $_[0];
     #print "Monto a pagar $_[0]\n";
-    $fuente= &getFuente($monto);
+    $fuente= getFuente($monto);
     #print "Fuente disponible $fuentes{$fuente}\n";
     if($fuentes{$fuente} >= $monto){
 	#print "Hay disponibilidad\n";
@@ -204,7 +204,7 @@ sub actualizarDisponibilidad{
     my($monto,$fuente);
 
     $monto = $_[0];
-    $fuente= &getFuente($monto);
+    $fuente= getFuente($monto);
     $fuentes{$fuente} -= $monto;
     $fuenteModificada{$fuente} = $ENV{'USER'};
     return 0;
@@ -278,19 +278,19 @@ sub pedirParametros{
 	  $modobarr = $param[1];
 	  if ($modobarr eq "-bf"){
 	    #tomo 2 parametros
-	    &validarFecha ($fechadesde = $param[2]);
-	    &validarFecha ($fechahasta = $param[3]);
+	    validarFecha ($fechadesde = $param[2]);
+	    validarFecha ($fechahasta = $param[3]);
 	  }
 	  if ($modobarr eq "-bi"){
 	    #tomo 2 parametros
-	    &validarMonto ($montodesde = $param[2]);
-	    &validarMonto ($montohasta = $param[3]);
+	    validarMonto ($montodesde = $param[2]);
+	    validarMonto ($montohasta = $param[3]);
 		}
 	  if ($modobarr eq "-bfi"){
 	    #tomo 3 parametros
-	    &validarFecha ($fechadesde = $param[2]);
-	    &validarFecha ($montodesde = $param[3]);
-	    &validarMonto ($montohasta = $param[4]);
+	    validarFecha ($fechadesde = $param[2]);
+	    validarFecha ($montodesde = $param[3]);
+	    validarMonto ($montohasta = $param[4]);
 	  }
 	}
 	elsif ( $param[0] ne "-q" ){
@@ -312,8 +312,7 @@ sub validarFecha(){
 	if ( $? == 0){
 		print "Formato fecha invalido: $fecha\n";
 		print "Formato fecha valido: YYYY-MM-DD\n";
-		#`bash glog.sh fepago ERROR "Error. Formato de fecha ingresada invalido: $fecha"`;
-		Bash( './glog.sh', 'fepago', 'ERROR', 'Formato de fecha ingresada invalido: $fecha' );
+		Bash( "./glog.sh fepago ERROR \"Formato de fecha ingresada invalido: $fecha\"" );
 		exit 1;
 	}	
 }
@@ -326,8 +325,7 @@ sub validarMonto(){
 	#print "monto a validar $monto\n";
 	if ($monto < 0){
 		print "El monto: $monto es negativo\n";
-		#`bash glog.sh fepago ERROR "Error. Monto ingresado negativo: $monto"`;
-		Bash( './glog.sh', 'fepago', 'ERROR', 'Monto ingresado negativo: $monto' );
+		Bash( "./glog.sh fepago ERROR \"Monto ingresado negativo: $monto\"" );
 
 		exit 1;
 	}
@@ -337,8 +335,7 @@ sub validarMonto(){
 
 	print "Formato monto no valido: $monto\n";
 	print "Formato monto valido: numero.2decimales (ej. 54.00)\n";
-	#`bash glog.sh fepago ERROR "Error. Formato monto ingresado invalido: $monto"`;
-	Bash( './glog.sh', 'fepago', 'ERROR', 'Formato monto ingresado invalido: $monto' );
+	Bash( "./glog.sh fepago ERROR \"Formato monto ingresado invalido: $monto\"" );
 
 	exit 1;	
 }
@@ -351,8 +348,7 @@ sub inicializarLog{
 	my(@args);
 	$textIni="Inicio de fepago $cadena";
 	chomp($textIni);
-	#`bash glog.sh fepago ERROR "$textIni"`;
-	Bash( './glog.sh', 'fepago', 'ERROR', '$textIni' );
+	Bash( "./glog.sh fepago ERROR \"$textIni\"" );
 
     return $result;
 }
@@ -453,7 +449,7 @@ sub determinarComprometidos{
 	      #print "Estado $apagar[1]\n";
 	      if ( $apagar[1] eq "A PAGAR" ){
 		#print "Monto $apagar[3]\n";
-		if (&checkDisponibilidad($apagar[3])){ #Hay disponibilidad
+		if (checkDisponibilidad($apagar[3])){ #Hay disponibilidad
 		  #print "registro comprometido\n";
 		  #Tengo que setear como LIBERADA
 		  $apagar[1] = "LIBERADA";
@@ -464,7 +460,7 @@ sub determinarComprometidos{
 		  #if ($modoejec eq "-ma"){
 		  #`echo $registro > "apagar2.txt"`;
 		  #}
-		  &actualizarDisponibilidad($apagar[3]);    	
+		  actualizarDisponibilidad($apagar[3]);    	
 		} else { #No hay disponibilidad
 		    #Siguen como A PAGAR
 		    #$r++;
@@ -481,18 +477,18 @@ sub determinarComprometidos{
 	}
 
 	if ( $modobarr eq "-bf" ){
-	  $valorMayor = &fechaEsMayor($fechaapagar);  
-	  $valorMenor = &fechaEsMenor($fechaapagar);  
+	  $valorMayor = fechaEsMayor($fechaapagar);  
+	  $valorMenor = fechaEsMenor($fechaapagar);  
 	  if ( $valorMayor && $valorMenor ){
 	      #Esta en el rango pedido, me fijo si esta comprometido
 	      if ( $apagar[1] eq "A PAGAR" ){
-		if (&checkDisponibilidad($apagar[3])){ #Hay disponibilidad
+		if (checkDisponibilidad($apagar[3])){ #Hay disponibilidad
 		  #Tengo que setear como LIBERADA
 		  $apagar[1] = "LIBERADA";
 		  $registro = join(";",@apagar);  
 		  push (@comprometidos, $registro);
 		  push (@regApagar, $registro); 
-		  &actualizarDisponibilidad($apagar[3]);    	
+		  actualizarDisponibilidad($apagar[3]);    	
 		} else { #No hay disponibilidad
 		    #Siguen como A PAGAR
 		    push (@comprometidos, $registro);
@@ -508,19 +504,19 @@ sub determinarComprometidos{
 	
 	if ( $modobarr eq "-bfi" ){
 	  $fechahasta = $fechalimite;
-	  $valorMayor = &fechaEsMayor($fechaapagar);  
-	  $valorMenor = &fechaEsMenor($fechaapagar);
+	  $valorMayor = fechaEsMayor($fechaapagar);  
+	  $valorMenor = fechaEsMenor($fechaapagar);
 	  if ( $valorMayor && $valorMenor && ($montoapagar > $montodesde) && ($montoapagar < $montohasta ) ){
 	      #Esta en el rango pedido, me fijo si esta comprometido
 	      if ( $apagar[1] eq "A PAGAR" ){
-		if (&checkDisponibilidad($apagar[3])){ #Hay disponibilidad
+		if (checkDisponibilidad($apagar[3])){ #Hay disponibilidad
 		  #print "registro comprometido\n";
 		  #Tengo que setear como LIBERADA
 		  $apagar[1] = "LIBERADA";
 		  $registro = join(";",@apagar);  
 		  push (@comprometidos, $registro);
 		  push (@regApagar, $registro);
-		  &actualizarDisponibilidad($apagar[3]);    	
+		  actualizarDisponibilidad($apagar[3]);    	
 		} else { #No hay disponibilidad
 		    #Siguen como A PAGAR
 		    push (@comprometidos, $registro);
@@ -581,28 +577,26 @@ sub generarArchivoPresu{
 #################################
 #		Fepago		
 #################################
-&estaCorriendoFepago;
-&estaCorriendoFeprima;
-&initAmbiente;
-&leerPresupuesto;
-#&mostrarPresupuesto;
-&pedirParametros;
+estaCorriendoFepago;
+estaCorriendoFeprima;
+initAmbiente;
+leerPresupuesto;
+pedirParametros;
 
 while ($modoejec ne "-q"){
-  &inicializarLog;
-  &determinarComprometidos;
-  &mostrarRegistrosComprometidos;
-  &mostrarPresupuesto;
+  inicializarLog;
+  determinarComprometidos;
+  mostrarRegistrosComprometidos;
+  mostrarPresupuesto;
 
   if ($modoejec eq "-ma"){ #Modo Actualizacion -> Debo persistir los cambios
     
-    &backupArchivo($entrada,$backupEntrada);
-    &backupArchivo($presupuesto,$backupPresupuesto);
-    #&mostrarRegistrosAgrabar;
-    &generarArchivoApagar;
-    &generarArchivoPresu;
+    backupArchivo($entrada,$backupEntrada);
+    backupArchivo($presupuesto,$backupPresupuesto);
+    generarArchivoApagar;
+    generarArchivoPresu;
   }
-  &pedirParametros;
+  pedirParametros;
 }
 print "Fin del proceso FEPAGO\n";
 
